@@ -20,7 +20,8 @@ public class AppManager : MonoBehaviour
     void Start()
     {
         Core.Init();
-        Debug.Log("Starting...");
+        CommandDefinitions.Init();
+        fileLines = new List<string>();
     }
 
     void Update()
@@ -30,18 +31,15 @@ public class AppManager : MonoBehaviour
 
     public void SelectFile()
     {
-        Debug.Log("Selecting File");
         string ncType = NativeFilePicker.ConvertExtensionToFileType("nc");
         NativeFilePicker.PickFile(LoadFile, ncType);
     }
 
     void LoadFile(string path)
     {
-        Debug.Log("Selected file!: " + path);
         if (File.Exists(path) != true)
         {
-            Debug.Log("File does not exist!");
-            return;
+            Debug.Log("File does not exist!"); return;
         }
         else
         {

@@ -6,8 +6,8 @@ namespace AxesCore
     public class Parser
     {
         public static void InterpretTokens(List<string> tokens)
-        { 
-            if(tokens.Count < 0) return;
+        {
+            if (tokens.Count < 0) return;
             for (int i = 0; i < tokens.Count; i++)
             {
                 tokens[i] = tokens[i].ToLower();
@@ -110,6 +110,7 @@ namespace AxesCore
                 {
                     throw new Exception("Unknown NC Code");
                 }
+                Core.mode = CoreMode.waiting;
             }
         }
     }
@@ -120,9 +121,10 @@ namespace AxesCore
         public string line;
         public BlockType type { get; }
 
-        Block(string _line)
+        public Block(string _line)
         {
             if (line == null || line == "") type = BlockType.EOB;
+
             line = _line;
         }
 

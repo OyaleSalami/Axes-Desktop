@@ -36,29 +36,35 @@ namespace AxesCore
         public static void SetFeedRate(float f)
         {
             Core.feedRate = f;
+            Core.mode = CoreMode.done;
         }
 
         public static void SetRPM(float r)
         {
             Core.rpm = r;
+            Core.mode = CoreMode.done;
         }
         public static void SetUPM(float u)
         {
             Core.upm = u;
+            Core.mode = CoreMode.done;
         }
         public static void SetSpindleSpeed(float s)
         {
             Core.spindleSpeed = s;
+            Core.mode = CoreMode.done;
         }
 
         public static void SetCoord()
         {
 
+            Core.mode = CoreMode.coord;
         }
 
         public static void SetDwellTime(float d)
         {
             Core.dwellTime = d;
+            Core.mode = CoreMode.done;
         }
 
         public static void AddMode(GMode mode)
@@ -77,6 +83,10 @@ namespace AxesCore
             }
         }
     }
+    public enum CoreMode : int
+    {
+        pre, waiting, running, done, coord
+    }
 
     public class Core
     {
@@ -86,6 +96,7 @@ namespace AxesCore
         public static float dwellTime = 0;
         public static float spindleSpeed;
         public static Dictionary<string, float> coords;
+        public static CoreMode mode;
 
         public static void Init()
         {
@@ -96,6 +107,7 @@ namespace AxesCore
             coords.Add("a", 0);
             coords.Add("b", 0);
             coords.Add("c", 0);
+            mode = CoreMode.pre;
         }
     }
 }

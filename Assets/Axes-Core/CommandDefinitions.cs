@@ -11,7 +11,7 @@ namespace AxesCore
         /// <summary>A dictionary to store all function handlers matching them to a key(type)</summary>
         public Dictionary<GMode, OperationHandler> opHandlers;
 
-        public CommandDefinitions()
+        public static void Init()
         {
             //Initialize G-Modes
             gModes.Add("G0", GMode.G00); //Rapid Move
