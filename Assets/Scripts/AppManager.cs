@@ -20,6 +20,7 @@ public class AppManager : MonoBehaviour
     void Start()
     {
         Core.Init();
+        ErrorHandler.Init();
         CommandDefinitions.Init();
         fileLines = new List<string>();
     }
@@ -66,30 +67,14 @@ public class AppManager : MonoBehaviour
 
     public void MinimizeDisplayPanel() => displayPanel.SetActive(!displayPanel.activeInHierarchy);
 
-    public void NextLine()
-    {
-        fileIndex++;
-        if (fileIndex >= fileLines.Count-1)
-        {
-            fileIndex = fileLines.Count - 1;
-        }
-        SetCodeLine(fileLines[fileIndex]);
-    }
-
-    public void PrevLine()
-    {
-        fileIndex--;
-        if (fileIndex <= 0)
-        {
-            fileIndex = 0;
-        }
-        SetCodeLine(fileLines[fileIndex]);
-    }
-
     public void UpdateUI()
     {
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
-                                "Feed Rate: " + Core.feedRate + "\n" +
-                                "Dwell Time: " + Core.dwellTime + "\n";
+                                "Feed Rate: "     + Core.feedRate + "\n" +
+                                "Dwell Time: "    + Core.dwellTime + "\n" +
+                                "Core Mode: "     + Core.mode + "\n" +
+                                "Position Mode: " + Core.positionMode + "\n" +
+                                "Arc Mode: "      + Core.arcMode + "\n" +
+                                "UPM: "           + Core.upm;
     }
 }

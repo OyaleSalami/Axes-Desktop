@@ -9,7 +9,7 @@ namespace AxesCore
         public delegate void OperationHandler();
 
         /// <summary>A dictionary to store all function handlers matching them to a key(type)</summary>
-        public Dictionary<GMode, OperationHandler> opHandlers;
+        public static Dictionary<GMode, OperationHandler> opHandlers;
 
         public static void Init()
         {
@@ -93,41 +93,49 @@ namespace AxesCore
             gModes.Add("G97", GMode.G97); //Constant Speed
             gModes.Add("G98", GMode.G98); //Initial Point Return
             gModes.Add("G99", GMode.G99); //R Point Return
+
+            InitializeHandlers();
         }
 
-        public void InitializeHandlers()
+        public static void InitializeHandlers()
         {
-            opHandlers.Add(GMode.G00, RapidMove);
-        }
+            opHandlers = new Dictionary<GMode, OperationHandler>();
 
-        public void RapidMove()
+            //Group 1 Modal Operators
+            opHandlers.Add(GMode.G00, CoreEngine.RapidMove);
+            opHandlers.Add(GMode.G01, CoreEngine.LinearFeedMove);
+            opHandlers.Add(GMode.G02, CoreEngine.ClockwiseArcFeedMove);
+            opHandlers.Add(GMode.G03, CoreEngine.CounterClockwiseArcFeedMove);
+            opHandlers.Add(GMode.G12, CoreEngine.ClockwiseCircle);
+            opHandlers.Add(GMode.G13, CoreEngine.CounterClockwiseCircle);
+            opHandlers.Add(GMode.G90, CoreEngine.PositionModeAbsolute);
+            opHandlers.Add(GMode.G91, CoreEngine.PositionModeIncremental);
+            opHandlers.Add(GMode.G901,CoreEngine.ArcModeAbsolute);
+            opHandlers.Add(GMode.G911,CoreEngine.ArcModeIncremental);
+            opHandlers.Add(GMode.G17, CoreEngine.XYPlaneSelect);
+            opHandlers.Add(GMode.G18, CoreEngine.ZXPlaneSelect);
+            opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
+        }
+    }
+
+    public class Coord
+    {
+        public float[] c;
+        //x y z a b c r i j k //Coordinate parameters
+        //0 1 2 3 4 5 6 7 8 9 //Their corresponding indexes
+
+        public Coord()
         {
-            CoreEngine.group1 = GMode.G01;
+            c = new float[10];
         }
-    }
 
-    public struct Coord
-    {
-        public float x { get; set; }
-        public float y { get; set; }
-        public float z { get; set; }
-    }
-
-    public struct Axes
-    {
-        public float a { get; set; }
-        public float b { get; set; }
-        public float c { get; set; }
-    }
-
-    public class Operators
-    {
-
-    }
-
-    public enum OperationType : int
-    {
-        RapidMove, LinearFeedMove, ArcFeedMove
+        public void Reset()
+        {
+            for (int i = 0; i < c.Length; i++)
+            {
+                c[i] = 0;
+            }
+        }
     }
 
     public enum GMode : int
@@ -146,5 +154,15 @@ namespace AxesCore
     public enum MMode : int
     {
 
+    }
+
+    public enum UPM : int
+    {
+        inches, millimeters, degrees
+    }
+
+    public enum PositionMode : int
+    {
+        absolute, incremental, arcAbsolute, arcIncremental  
     }
 }

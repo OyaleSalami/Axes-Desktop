@@ -7,111 +7,102 @@ namespace AxesCore
     {
         public static void InterpretTokens(List<string> tokens)
         {
-            if (tokens.Count < 0) return;
-            for (int i = 0; i < tokens.Count; i++)
+            if(tokens.Count < 1)
             {
-                tokens[i] = tokens[i].ToLower();
-
-                if (tokens[i].ToLower().StartsWith('g')) //Preparatory Instruction
-                {
-                    if (CommandDefinitions.gModes.ContainsKey(tokens[i]))
-                    {
-                        CoreEngine.SetGMode(CommandDefinitions.gModes[tokens[i]]); //Set the mode in the core engine
-                    }
-                }
-                else if (tokens[i].ToLower().StartsWith('s'))
-                {
-                    if (CommandDefinitions.mModes.ContainsKey(tokens[i]))
-                    {
-                        CoreEngine.SetMMode(CommandDefinitions.mModes[tokens[i]]); //Set the mode in the core engine
-                    }
-                }
-                else if (tokens[i].ToLower().StartsWith('p'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float p = 0;
-                    if (float.TryParse(temp, out p) != true)
-                    {
-                        throw new Exception("Unable to convert to float");
-                    }
-                    CoreEngine.SetDwellTime(p);
-                }
-                else if (tokens[i].ToLower().StartsWith('f'))
-                {
-                    string temp = tokens[i];
-                    temp.Remove(0);
-                    float f = 0;
-                    if (float.TryParse(temp, out f) != true)
-                    {
-                        throw new Exception("Unable to convert to float");
-                    }
-                    CoreEngine.SetFeedRate(f);
-                }
-                else if (tokens[i].ToLower().StartsWith('s'))
-                {
-                    string temp = tokens[i];
-                    temp.Remove(0);
-                    float s = 0;
-                    if (float.TryParse(temp, out s) != true)
-                    {
-                        throw new Exception("Unable to convert to float");
-                    }
-                    CoreEngine.SetSpindleSpeed(s);
-                }
-                else if (tokens[i].StartsWith('x'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float x = 0;
-                    if (float.TryParse(temp, out x) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["x"] = x;
-                    CoreEngine.SetCoord();
-                }
-                else if (tokens[i].StartsWith('y'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float y = 0;
-                    if (float.TryParse(temp, out y) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["y"] = y;
-                    CoreEngine.SetCoord();
-                }
-                else if (tokens[i].StartsWith('z'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float z = 0;
-                    if (float.TryParse(temp, out z) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["z"] = z;
-                    CoreEngine.SetCoord();
-                }
-                else if (tokens[i].StartsWith('a'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float a = 0;
-                    if (float.TryParse(temp, out a) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["a"] = a;
-                    CoreEngine.SetCoord();
-                }
-                else if (tokens[i].StartsWith('b'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float b = 0;
-                    if (float.TryParse(temp, out b) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["b"] = b;
-                    CoreEngine.SetCoord();
-                }
-                else if (tokens[i].StartsWith('c'))
-                {
-                    string temp = tokens[i]; temp.Remove(0);
-                    float c = 0;
-                    if (float.TryParse(temp, out c) != true) throw new Exception("Unable to convert to float");
-                    Core.coords["a"] = c;
-                    CoreEngine.SetCoord();
-                }
-                else
-                {
-                    throw new Exception("Unknown NC Code");
-                }
-                Core.mode = CoreMode.waiting;
+                ErrorHandler.Log("Empty Token list");
+                return;
             }
+
+            CoreEngine.ResetCoord();
+
+            foreach (string token in tokens)
+            {
+                switch (token.ToLower()[0])
+                {
+                    case 'g': //Preparatory Instruction
+                        //Call the appropriate function to handle the instruction
+                        CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
+                        break;
+
+                    case 'p': //Set Dwell Time
+                        CoreEngine.SetDwellTime(ReadValue(token));
+                        break;
+
+                    case 'f': //Set feed rate
+                        CoreEngine.SetFeedRate(ReadValue(token));
+                        break;
+                    
+                    case 's': //Set Spindle Speed
+                        CoreEngine.SetSpindleSpeed(ReadValue(token));
+                        break;
+
+                    case 'm': //Set any extra mode
+                        CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
+                        break;
+
+                    case 'x': //Set the x coordinate
+                        Core.mode = CoreMode.drawStart;
+                        Core.coord.c[0] = ReadValue(token);
+                        break;
+
+                    case 'y': //Set the y coordinate
+                        Core.mode = CoreMode.drawStart;
+                        Core.coord.c[1] = ReadValue(token);
+                        break;
+
+                    case 'z': //Set the z coordinate
+                        Core.mode = CoreMode.drawStart;
+                        Core.coord.c[2] = ReadValue(token);
+                        break;
+
+                    case 'a': //Set the a coordinate
+                        Core.coord.c[3] = ReadValue(token);
+                        break;
+
+                    case 'b': //Set the b coordinate
+                        Core.coord.c[4] = ReadValue(token);
+                        break;
+
+                    case 'c': //Set the c coordinate
+                        Core.coord.c[5] = ReadValue(token);
+                        break;
+
+                    case 'r': //Set the r coordinate
+                        Core.coord.c[6] = ReadValue(token);
+                        break;
+
+                    case 'i': //Set the i coordinate
+                        Core.coord.c[7] = ReadValue(token);
+                        break;
+
+                    case 'j': //Set the j coordinate
+                        Core.coord.c[8] = ReadValue(token);
+                        break;
+
+                    case 'k': //Set the k coordinate
+                        Core.coord.c[9] = ReadValue(token);
+                        break;
+
+                    default:
+                        ErrorHandler.Error("Undefined token: " + token);
+                        break;
+                }
+            }
+
+        }
+    
+        private static float ReadValue(string token)
+        {
+            float f = 0;
+            string temp = token.Remove(0, 1); //Remove the first letter
+
+            if (float.TryParse(temp, out f) != true)
+            {
+                ErrorHandler.Error("Unbale to convert float: " + temp);
+                throw new Exception("Unable to convert to float");
+            }
+
+            return f;
         }
     }
 
@@ -119,27 +110,16 @@ namespace AxesCore
     public class Block
     {
         public string line;
-        public BlockType type { get; }
+        public Block(string _line) =>  line = _line;
 
-        public Block(string _line)
-        {
-            if (line == null || line == "") type = BlockType.EOB;
-
-            line = _line;
-        }
-
-        /// <summary>Returns a list of tokens from the line</summary>
-        /// <returns></returns>
+        /// <summary>Returns the list of tokens from a block</summary>\
         public List<string> Tokenize()
         {
             List<string> tokens = new();
-            //Split the block according to the tokens
-            tokens.AddRange(line.Split(' '));
+            tokens.AddRange(line.Split(' ')); //Split the block according to the tokens
 
             tokens.RemoveAll(IsASpace);
             tokens.RemoveAll(IsAComment);
-
-            //tokens.RemoveAll((string s) => { return s == " "; } );
 
             return tokens;
         }
@@ -155,10 +135,4 @@ namespace AxesCore
         }
     }
 
-    public enum BlockType
-    {
-        None,
-        EOB,
-    }
 }
-
