@@ -115,6 +115,8 @@ namespace AxesCore
             opHandlers.Add(GMode.G17, CoreEngine.XYPlaneSelect);
             opHandlers.Add(GMode.G18, CoreEngine.ZXPlaneSelect);
             opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
+            opHandlers.Add(GMode.G20, CoreEngine.SetInch);
+            opHandlers.Add(GMode.G21, CoreEngine.SetMilli);
         }
     }
 
@@ -163,6 +165,11 @@ namespace AxesCore
 
     public enum PositionMode : int
     {
-        absolute, incremental, arcAbsolute, arcIncremental  
+        absolute, incremental, arcAbsolute, arcIncremental
+    }
+
+    public enum PlaneMode : int
+    {
+        XY, ZX, YZ
     }
 }

@@ -10,6 +10,7 @@ public class AppManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] Text codeLine;
     [SerializeField] Text titleText;
+    [SerializeField] Text dataLog;
     [SerializeField] Text machineVariables;
     [SerializeField] GameObject displayPanel;
 
@@ -69,12 +70,25 @@ public class AppManager : MonoBehaviour
 
     public void UpdateUI()
     {
+        dataLog.text = "";
+        foreach (var item in ErrorHandler.logs)
+        {
+            dataLog.text += "\n"  + item;
+        }
+        
+        foreach (var item in ErrorHandler.errors)
+        {
+            dataLog.text += "\n" + "<color=red>" + item + "</color>";
+        }
+
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
                                 "Feed Rate: "     + Core.feedRate + "\n" +
                                 "Dwell Time: "    + Core.dwellTime + "\n" +
-                                "Core Mode: "     + Core.mode + "\n" +
                                 "Position Mode: " + Core.positionMode + "\n" +
                                 "Arc Mode: "      + Core.arcMode + "\n" +
+                                "Exact Stop: "    + Core.exactStop + "\n" +
+                                "Plane Select: "  + Core.planeMode + "\n" +
+                                "Core Mode: "     + Core.mode + "\n" +
                                 "UPM: "           + Core.upm;
     }
 }

@@ -6,8 +6,8 @@ namespace AxesCore
 {
     public class ErrorHandler
     {
-        static List<string> logs;
-        static List<string> errors;
+        public static List<string> logs;
+        public static List<string> errors;
 
         public static void Init()
         {

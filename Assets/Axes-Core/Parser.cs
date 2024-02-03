@@ -21,7 +21,14 @@ namespace AxesCore
                 {
                     case 'g': //Preparatory Instruction
                         //Call the appropriate function to handle the instruction
-                        CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
+                        try
+                        {
+                            CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
+                        }
+                        catch (Exception e) 
+                        {
+                            ErrorHandler.Error(e.ToString());
+                        }
                         break;
 
                     case 'p': //Set Dwell Time
@@ -98,7 +105,7 @@ namespace AxesCore
 
             if (float.TryParse(temp, out f) != true)
             {
-                ErrorHandler.Error("Unbale to convert float: " + temp);
+                ErrorHandler.Error("Unbale to convert float: " + token);
                 throw new Exception("Unable to convert to float");
             }
 

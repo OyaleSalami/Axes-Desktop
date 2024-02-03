@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
-
 namespace AxesCore
 {
     public class CoreEngine
@@ -23,7 +20,7 @@ namespace AxesCore
         public static void CounterClockwiseArcFeedMove() => Core.group[1] = GMode.G03;
         public static void ClockwiseCircle() => Core.group[1] = GMode.G12;
         public static void CounterClockwiseCircle() => Core.group[1] = GMode.G13;
-        
+
         public static void PositionModeAbsolute()
         {
             Core.group[3] = GMode.G90;
@@ -48,13 +45,47 @@ namespace AxesCore
             Core.arcMode = PositionMode.arcIncremental;
         }
 
-        public static void XYPlaneSelect() => Core.group[2] = GMode.G17;
-        public static void ZXPlaneSelect() => Core.group[2] = GMode.G18;
-        public static void YZPlaneSelect() => Core.group[2] = GMode.G19;
+        public static void XYPlaneSelect()
+        {
+            Core.group[2] = GMode.G17;
+            Core.planeMode = PlaneMode.XY;
+        }
+        public static void ZXPlaneSelect()
+        {
+            Core.group[2] = GMode.G18;
+            Core.planeMode = PlaneMode.ZX;
+        }
+        public static void YZPlaneSelect()
+        {
+            Core.group[2] = GMode.G19;
+            Core.planeMode = PlaneMode.YZ;
+        }
 
         public static void ResetCoord()
         {
             Core.coord = new();
+        }
+
+        public static void SetInch()
+        {
+            Core.group[6] = GMode.G20;
+            Core.upm = UPM.inches;
+        }
+
+        public static void SetMilli()
+        {
+            Core.group[6] = GMode.G21;
+            Core.upm = UPM.millimeters;
+        }
+
+        public static void SetScale()
+        {
+
+        }
+
+        public static void Cancelscale()
+        {
+            Core.scale = 1;
         }
     }
 
@@ -68,6 +99,8 @@ namespace AxesCore
         public static UPM upm;
         public static PositionMode arcMode;
         public static PositionMode positionMode;
+        public static PlaneMode planeMode;
+        public static float scale = 1;
         public static float feedRate = 15;
         public static float dwellTime = 0;
         public static bool exactStop = false;
@@ -82,6 +115,7 @@ namespace AxesCore
             CoreEngine.ResetCoord();
             mode = CoreMode.pre;
             upm = UPM.millimeters;
+            planeMode = PlaneMode.XY;
             group = new GMode[16]; //Group 0 to Group 16
         }
     }
