@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,7 +23,7 @@ public class CameraControl : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("Camera Script Active");
+        mode = CamMode.Pan;
         ogPivotPos = pivot.transform.position;
         ogCameraPos = this.transform.position;
 
@@ -41,8 +42,9 @@ public class CameraControl : MonoBehaviour
 
         if (Input.mouseScrollDelta.sqrMagnitude > 0)
         {
-            ZoomCamera(Input.mouseScrollDelta.y);
+            ZoomCamera(-Input.mouseScrollDelta.y);
         }
+
         if (mode == CamMode.Pan)
         {
             float xMov = Input.GetAxis("Horizontal");
@@ -50,6 +52,7 @@ public class CameraControl : MonoBehaviour
 
             transform.position += (transform.right * xMov + transform.up * yMov) * 2 * Time.deltaTime;
         }
+
         else if (mode == CamMode.Rotate)
         {
             //TODO: Add mouse rotation
@@ -76,6 +79,7 @@ public class CameraControl : MonoBehaviour
         {
             cam.fieldOfView += _factor;
         }
+        Debug.Log("FOV: " + cam.fieldOfView);
     }
 
     public void ResetCamera()

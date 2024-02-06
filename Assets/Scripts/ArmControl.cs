@@ -1,57 +1,150 @@
 using UnityEngine;
 using AxesCore;
+using System.Linq;
 
 public class ArmControl: MonoBehaviour
 {
     [SerializeField] bool running;
 
+    [Header("Effector Parameters")]
+    [SerializeField] GameObject effector;
+    [SerializeField] TrailRenderer trail;
+
     [Header("Running Parameters")]
-    Vector3 startCoord;
-    Vector3 endCoord;
-    [SerializeField] OperationType opType;
+    public Vector3 startCoord;
+    public Vector3 endCoord;
+    public Vector3 centerPoint;
+    public float radius;
+    float d = 0f;
+    bool draw = false;
 
     float timer = 0;
+    float degree = 0;
 
     void Start()
     {
         running = false;
     }
 
+    static float t = 0f; //For Timing LERP operations
+
     void Update()
     {
-        switch (opType) 
+        if(Core.mode == CoreMode.drawStart)
         {
-            case OperationType.RapidMove:
-                transform.position = Vector3.Slerp(transform.position, startCoord, (timer + (Core.feedRate/60)) * Time.deltaTime);
-                if (Vector3.Equals(transform.position, startCoord)) running = false;
+            //Linear movements
+            if (Core.group[1] == GMode.G00 || Core.group[1] == GMode.G01)
+            {
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord,t);
+                t += (Core.feedRate/(60*d)) * Time.deltaTime;
+            }
+
+            //Clockwise Arc Movements
+            if (Core.group[1] == GMode.G02)
+            {
+                Vector3 temp = new();
+                radius = CalculateRadius();
+                temp.x = centerPoint.x + (radius * Mathf.Cos(degree));
+                temp.z = centerPoint.z + (radius * Mathf.Sin(degree));
+
+                effector.transform.position = temp;
+                degree += 1 * Time.deltaTime; 
+            }
+
+            //Anti-Clockwise Arc Movements
+            if (Core.group[1] == GMode.G03)
+            {
+
+            }
+        }
+
+        if(t >= 1.0f)
+        {
+            t = 0f;
+            Core.mode = CoreMode.drawEnd;
+        }
+
+        if(degree >= 30f) //The distance between this 2 vecors
+        {
+            degree = 0f;
+            Core.mode = CoreMode.drawEnd;
+        }
+    }
+
+    public void Draw()
+    {
+        switch (Core.group[1])
+        {
+            case GMode.G00:
+                draw = false;
+                SetCoords();
                 break;
 
-            case OperationType.LinearFeedMove:
-                transform.position = Vector3.Slerp(transform.position, endCoord, (timer + (Core.feedRate / 60)) * Time.deltaTime);
-                if (Vector3.Equals(transform.position, endCoord)) running = false;
+            case GMode.G01:
+                draw = true;
+                SetCoords();
                 break;
 
+            case GMode.G02:
+                draw = true;
+                SetCoords();
+                break;
+
+            case GMode.G03:
+                draw = true;
+                SetCoords();
+                break;
+
+            case GMode.G04:
+                draw = true;
+                break;
 
             default:
                 break;
         }
     }
 
-    public void RapidMove(Coord coord)
+    public void SetCoords()
     {
-        startCoord = new Vector3(coord.x, coord.z, coord.y);
+        ResetCoords();
 
-        //TODO: Stop Drawing Lines Instead
-        GetComponent<TrailRenderer>().enabled = false; 
-        opType = OperationType.RapidMove;
+        if (Core.positionMode == PositionMode.absolute)
+        {
+            endCoord = new Vector3(Core.coord.c[0], Core.coord.c[2], Core.coord.c[1]);
+        }
+        else //PositionMode.incremental
+        {
+            endCoord = startCoord + new Vector3(Core.coord.c[0], Core.coord.c[2], Core.coord.c[1]);
+        }
+
+        if(Core.arcMode == PositionMode.arcAbsolute)
+        {
+            //X Y Z
+            //I K J
+            centerPoint = new Vector3(Core.coord.c[7], Core.coord.c[9], Core.coord.c[8]);
+        }
+        else
+        {
+            centerPoint = startCoord + new Vector3(Core.coord.c[7], Core.coord.c[9], Core.coord.c[8]);
+        }
+
+        d = (endCoord - startCoord).magnitude;
+
+        trail.emitting = draw;
     }
 
-    public void LinearFeedMove(Coord start, Coord end)
+    public void ResetCoords()
     {
-        startCoord = new Vector3(start.x, start.z, start.y);
-        endCoord = new Vector3(end.x, end.z, end.y);
+        d = 0; degree = 0;
+        endCoord = new();
+        centerPoint = new();
+        startCoord = effector.transform.position;
+    }
 
-        GetComponent<TrailRenderer>().enabled = true; //TODO: Draw Lines Instead
-        opType = OperationType.LinearFeedMove;
+    public float CalculateRadius()
+    {
+        Vector3 temp = (startCoord - centerPoint)/2; //Midpoint
+
+        return temp.magnitude;
     }
 }

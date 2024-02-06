@@ -1,101 +1,122 @@
-using System.Collections.Generic;
-
 namespace AxesCore
 {
     public class CoreEngine
     {
-        public static GMode group0;
-        public static GMode group1;
-        public static GMode group2;
-        public static GMode group3;
-        public static GMode group4;
-        public static GMode group6;
-        public static GMode group7;
-        public static GMode group8;
-        public static GMode group10;
-        public static GMode group11;
-        public static GMode group14;
-        public static GMode group16;
-
-        static List<GMode> activeModes;
-
-        internal static void SetGMode(GMode mode)
-        {
-            //Set the group mode
-            if (mode == GMode.G00 || mode == GMode.G01 || mode == GMode.G02 || mode == GMode.G03 || mode == GMode.G12 || mode == GMode.G13)
-            {
-                group1 = mode;
-            }
-        }
-
-        internal static void SetMMode(MMode mode)
+        public static void SetMMode(MMode mode)
         {
 
         }
+        public static void SetUPM(UPM upm) { Core.upm = upm; Core.mode = CoreMode.done; }
 
-        public static void SetFeedRate(float f)
+        public static void SetFeedRate(float f) { Core.feedRate = f; Core.mode = CoreMode.done; }
+
+        public static void SetSpindleSpeed(float s) { Core.spindleSpeed = s; Core.mode = CoreMode.done; }
+
+        public static void SetDwellTime(float d) { Core.dwellTime = d; Core.mode = CoreMode.done; }
+
+        public static void RapidMove() => Core.group[1] = GMode.G00;
+        public static void LinearFeedMove() => Core.group[1] = GMode.G01;
+        public static void ClockwiseArcFeedMove() => Core.group[1] = GMode.G02;
+        public static void CounterClockwiseArcFeedMove() => Core.group[1] = GMode.G03;
+        public static void ClockwiseCircle() => Core.group[1] = GMode.G12;
+        public static void CounterClockwiseCircle() => Core.group[1] = GMode.G13;
+
+        public static void PositionModeAbsolute()
         {
-            Core.feedRate = f;
+            Core.group[3] = GMode.G90;
+            Core.positionMode = PositionMode.absolute;
         }
 
-        public static void SetRPM(float r)
+        public static void PositionModeIncremental()
         {
-            Core.rpm = r;
-        }
-        public static void SetUPM(float u)
-        {
-            Core.upm = u;
-        }
-        public static void SetSpindleSpeed(float s)
-        {
-            Core.spindleSpeed = s;
+            Core.group[3] = GMode.G91;
+            Core.positionMode = PositionMode.incremental;
         }
 
-        public static void SetCoord()
+        public static void ArcModeAbsolute()
+        {
+            Core.group[4] = GMode.G901;
+            Core.arcMode = PositionMode.arcAbsolute;
+        }
+
+        public static void ArcModeIncremental()
+        {
+            Core.group[4] = GMode.G911;
+            Core.arcMode = PositionMode.arcIncremental;
+        }
+
+        public static void XYPlaneSelect()
+        {
+            Core.group[2] = GMode.G17;
+            Core.planeMode = PlaneMode.XY;
+        }
+        public static void ZXPlaneSelect()
+        {
+            Core.group[2] = GMode.G18;
+            Core.planeMode = PlaneMode.ZX;
+        }
+        public static void YZPlaneSelect()
+        {
+            Core.group[2] = GMode.G19;
+            Core.planeMode = PlaneMode.YZ;
+        }
+
+        public static void ResetCoord()
+        {
+            Core.coord = new();
+        }
+
+        public static void SetInch()
+        {
+            Core.group[6] = GMode.G20;
+            Core.upm = UPM.inches;
+        }
+
+        public static void SetMilli()
+        {
+            Core.group[6] = GMode.G21;
+            Core.upm = UPM.millimeters;
+        }
+
+        public static void SetScale()
         {
 
         }
 
-        public static void SetDwellTime(float d)
+        public static void Cancelscale()
         {
-            Core.dwellTime = d;
+            Core.scale = 1;
         }
+    }
 
-        public static void AddMode(GMode mode)
-        {
-            if (activeModes.Contains(mode))
-            {
-                //The mode is already active, no need to add it
-            }
-            else if (true) //Check For Cancel Modes
-            {
-
-            }
-            else //Add the mode
-            {
-                activeModes.Add(mode);
-            }
-        }
+    public enum CoreMode : int
+    {
+        pre, waiting, running, done, coord, drawStart, drawEnd, drawing
     }
 
     public class Core
     {
-        public static float upm;
-        public static float rpm;
+        public static UPM upm;
+        public static PositionMode arcMode;
+        public static PositionMode positionMode;
+        public static PlaneMode planeMode;
+        public static float scale = 1;
         public static float feedRate = 15;
         public static float dwellTime = 0;
+        public static bool exactStop = false;
         public static float spindleSpeed;
-        public static Dictionary<string, float> coords;
+
+        public static CoreMode mode;
+        public static Coord coord;
+        public static GMode[] group;
 
         public static void Init()
         {
-            coords = new Dictionary<string, float>();
-            coords.Add("x", 0);
-            coords.Add("y", 0);
-            coords.Add("z", 0);
-            coords.Add("a", 0);
-            coords.Add("b", 0);
-            coords.Add("c", 0);
+            CoreEngine.ResetCoord();
+            mode = CoreMode.pre;
+            upm = UPM.millimeters;
+            planeMode = PlaneMode.XY;
+            group = new GMode[16]; //Group 0 to Group 16
         }
     }
 }

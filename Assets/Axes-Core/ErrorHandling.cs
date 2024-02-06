@@ -6,16 +6,22 @@ namespace AxesCore
 {
     public class ErrorHandler
     {
-        List<string> logs;
-        List<string> errors;
+        public static List<string> logs;
+        public static List<string> errors;
 
-        public void Log(string log)
+        public static void Init()
+        {
+            logs = new();
+            errors = new();
+        }
+
+        public static void Log(string log)
         {
             logs.Add(log);
             Debug.Log(log);
         }
 
-        public void Error(string error)
+        public static void Error(string error)
         {
             logs.Add(error);
             Debug.LogError(error);
