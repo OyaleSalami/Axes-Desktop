@@ -1,3 +1,5 @@
+using System;
+
 namespace AxesCore
 {
     public class CoreEngine
@@ -6,20 +8,65 @@ namespace AxesCore
         {
 
         }
-        public static void SetUPM(UPM upm) { Core.upm = upm; Core.mode = CoreMode.done; }
 
-        public static void SetFeedRate(float f) { Core.feedRate = f; Core.mode = CoreMode.done; }
+        #region Tool Functions
+        public static void SetTool(Tool tool)
+        {
+            Core.tool = tool;
+        }
 
-        public static void SetSpindleSpeed(float s) { Core.spindleSpeed = s; Core.mode = CoreMode.done; }
+        public static void SetToolDiameter(float value)
+        {
+            Core.toolDiameter = value;
+        }
 
-        public static void SetDwellTime(float d) { Core.dwellTime = d; Core.mode = CoreMode.done; }
+        public static void SetToolHeight(float value)
+        {
+            Core.toolHeight = value;
+        }
+        #endregion
 
-        public static void RapidMove() => Core.group[1] = GMode.G00;
-        public static void LinearFeedMove() => Core.group[1] = GMode.G01;
-        public static void ClockwiseArcFeedMove() => Core.group[1] = GMode.G02;
-        public static void CounterClockwiseArcFeedMove() => Core.group[1] = GMode.G03;
-        public static void ClockwiseCircle() => Core.group[1] = GMode.G12;
-        public static void CounterClockwiseCircle() => Core.group[1] = GMode.G13;
+        public static void SetUPM(UPM upm) { Core.upm = upm; }
+
+        public static void SetFeedRate() { SetFeedRate(15); }
+        public static void SetFeedRate(float f) { Core.feedRate = f; }
+
+        public static void SetSpindleSpeed(float s) { Core.spindleSpeed = s; }
+
+        public static void SetDwellTime(float d) { Core.dwellTime = d; }
+
+        #region Group 1 Functions
+        public static void RapidMove() 
+        { 
+            Core.group[1] = GMode.G00;
+            Core.coordMode = CoordMode.draw;
+        }
+        public static void LinearFeedMove() 
+        {
+            Core.group[1] = GMode.G01; 
+            Core.coordMode = CoordMode.draw;
+        }
+        public static void ClockwiseArcFeedMove() 
+        { 
+            Core.group[1] = GMode.G02; 
+            Core.coordMode = CoordMode.draw;
+        }
+        public static void CounterClockwiseArcFeedMove()
+        {
+            Core.group[1] = GMode.G03;
+            Core.coordMode = CoordMode.draw;
+        }
+        public static void ClockwiseCircle()
+        {
+            Core.group[1] = GMode.G12;
+            Core.coordMode = CoordMode.draw;
+        }
+        public static void CounterClockwiseCircle()
+        {
+            Core.group[1] = GMode.G13;
+            Core.coordMode = CoordMode.draw;
+        }
+        #endregion
 
         public static void PositionModeAbsolute()
         {
@@ -64,6 +111,12 @@ namespace AxesCore
         public static void ResetCoord()
         {
             Core.coord = new();
+            SetCoordMode(CoordMode.draw);
+        }
+
+        public static void SetCoordMode(CoordMode mode)
+        {
+            Core.coordMode = mode;
         }
 
         public static void SetInch()
@@ -87,11 +140,82 @@ namespace AxesCore
         {
             Core.scale = 1;
         }
+
+        #region Group 12 Functions
+        public static void SetFixtureOffset(int offset)
+        {
+            Core.fixtureOffset = offset;
+        }
+        public static void SetFixtureOffset1()
+        {
+            Core.group[12] = GMode.G54;
+            SetFixtureOffset(1);
+        }
+        public static void SetAdditionalFixtureOffset()
+        {
+            Core.group[12] = GMode.G541;
+        }
+        public static void SetFixtureOffset2()
+        {
+            Core.group[12] = GMode.G55;
+            SetFixtureOffset(2);
+        }
+        public static void SetFixtureOffset3()
+        {
+            Core.group[12] = GMode.G56;
+            SetFixtureOffset(3);
+        }
+        public static void SetFixtureOffset4()
+        {
+            Core.group[12] = GMode.G57;
+            SetFixtureOffset(4);
+        }
+        public static void SetFixtureOffset5()
+        {
+            Core.group[12] = GMode.G58;
+            SetFixtureOffset(5);
+        }
+        public static void SetFixtureOffset6()
+        {
+            Core.group[12] = GMode.G59;
+            SetFixtureOffset(6);
+        }
+        #endregion
+        
+        public static void HandleCoordinates()
+        {
+            try
+            {
+                //Handle Fixture Offset
+                if (Core.coordMode == CoordMode.fixtureOffset)
+                {
+                    SetFixtureOffset(Int32.Parse((Core.coord.p - 6).ToString()));
+                }
+                else if (Core.coordMode == CoordMode.addFixtureOffset)
+                {
+                    SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
+                }
+                else
+                {
+                    SetDwellTime(Core.coord.p);
+                    Core.mode = CoreMode.drawStart;
+                }
+
+                if (Core.coordMode == CoordMode.draw)
+                {
+                    Core.mode = CoreMode.drawStart;
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorHandler.Error("Error handling the coordinates: " + e);
+            }
+        }
     }
 
     public enum CoreMode : int
     {
-        pre, waiting, running, done, coord, drawStart, drawEnd, drawing
+        pre, waiting, running, done, coord, drawStart, drawEnd
     }
 
     public class Core
@@ -100,6 +224,10 @@ namespace AxesCore
         public static PositionMode arcMode;
         public static PositionMode positionMode;
         public static PlaneMode planeMode;
+        public static Tool tool;
+        public static float toolDiameter = 1.0f;
+        public static float toolHeight = 1.0f;
+        public static int fixtureOffset = 1;
         public static float scale = 1;
         public static float feedRate = 15;
         public static float dwellTime = 0;
@@ -108,6 +236,7 @@ namespace AxesCore
 
         public static CoreMode mode;
         public static Coord coord;
+        public static CoordMode coordMode;
         public static GMode[] group;
 
         public static void Init()

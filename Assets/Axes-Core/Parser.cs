@@ -9,7 +9,7 @@ namespace AxesCore
         {
             if(tokens.Count < 1)
             {
-                ErrorHandler.Log("Empty Token list");
+                ErrorHandler.Log("Empty Token list: " + tokens);
                 return;
             }
 
@@ -19,75 +19,99 @@ namespace AxesCore
             {
                 switch (token.ToLower()[0])
                 {
-                    case 'g': //Preparatory Instruction
-                        //Call the appropriate function to handle the instruction
+                    case 'g': //Preparatory Instructions
                         try
                         {
+                            //Call the appropriate function to handle the instruction
                             CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
+
+                            switch (CommandDefinitions.gModes[token])
+                            {
+                                case GMode.G59:
+                                    CoreEngine.SetCoordMode(CoordMode.fixtureOffset);
+                                    break;
+
+                                case GMode.G541:
+                                    CoreEngine.SetCoordMode(CoordMode.addFixtureOffset);
+                                    break;
+
+                                default:
+                                    CoreEngine.SetCoordMode(CoordMode.draw);
+                                    break;
+                            }
                         }
                         catch (Exception e) 
                         {
-                            ErrorHandler.Error(e.ToString());
+                            ErrorHandler.Error("Unhandled gcode: " + e.ToString());
                         }
-                        break;
-
-                    case 'p': //Set Dwell Time
-                        CoreEngine.SetDwellTime(ReadValue(token));
-                        break;
-
-                    case 'f': //Set feed rate
-                        CoreEngine.SetFeedRate(ReadValue(token));
-                        break;
-                    
-                    case 's': //Set Spindle Speed
-                        CoreEngine.SetSpindleSpeed(ReadValue(token));
                         break;
 
                     case 'm': //Set any extra mode
                         CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
                         break;
 
+                    case 't': //Set the current tool
+                        CoreEngine.SetTool(CommandDefinitions.tools[token]);
+                        break;
+
+                    case 'd': //Set tool diameter
+                        CoreEngine.SetToolDiameter(ReadValue(token));
+                        break;
+
+                    case 'h': //Set tool diameter
+                        CoreEngine.SetToolHeight(ReadValue(token));
+                        break;
+
+                    case 'p': //Set the P coordinate
+                        Core.coord.p = ReadValue(token);
+                        break;
+
+                    case 'f': //Set the F coordinate
+                        Core.coord.f = ReadValue(token);
+                        break;
+                    
+                    case 's': //Set Spindle Speed
+                        Core.coord.s = ReadValue(token);
+                        break;
+
                     case 'x': //Set the x coordinate
-                        Core.mode = CoreMode.drawStart;
-                        Core.coord.c[0] = ReadValue(token);
+                        Core.coord.x = ReadValue(token);
                         break;
 
                     case 'y': //Set the y coordinate
-                        Core.mode = CoreMode.drawStart;
-                        Core.coord.c[1] = ReadValue(token);
+                        Core.coord.y = ReadValue(token);
                         break;
 
                     case 'z': //Set the z coordinate
-                        Core.mode = CoreMode.drawStart;
-                        Core.coord.c[2] = ReadValue(token);
+                        Core.coord.z = ReadValue(token);
                         break;
 
                     case 'a': //Set the a coordinate
-                        Core.coord.c[3] = ReadValue(token);
+                        Core.coord.a = ReadValue(token);
                         break;
 
                     case 'b': //Set the b coordinate
-                        Core.coord.c[4] = ReadValue(token);
+                        Core.coord.b = ReadValue(token);
                         break;
 
                     case 'c': //Set the c coordinate
-                        Core.coord.c[5] = ReadValue(token);
+                        Core.coord.c = ReadValue(token);
                         break;
 
                     case 'r': //Set the r coordinate
-                        Core.coord.c[6] = ReadValue(token);
+                        Core.coord.r = ReadValue(token);
                         break;
 
                     case 'i': //Set the i coordinate
-                        Core.coord.c[7] = ReadValue(token);
+                        Core.coord.i = ReadValue(token);
                         break;
 
                     case 'j': //Set the j coordinate
-                        Core.coord.c[8] = ReadValue(token);
+                        Core.coord.j = ReadValue(token);
                         break;
 
                     case 'k': //Set the k coordinate
-                        Core.coord.c[9] = ReadValue(token);
+                        Core.coord.k = ReadValue(token);
                         break;
 
                     default:
@@ -96,6 +120,7 @@ namespace AxesCore
                 }
             }
 
+            CoreEngine.HandleCoordinates();
         }
     
         private static float ReadValue(string token)
@@ -105,7 +130,7 @@ namespace AxesCore
 
             if (float.TryParse(temp, out f) != true)
             {
-                ErrorHandler.Error("Unbale to convert float: " + token);
+                ErrorHandler.Error("Unable to convert float: " + token);
                 throw new Exception("Unable to convert to float");
             }
 
@@ -117,7 +142,11 @@ namespace AxesCore
     public class Block
     {
         public string line;
-        public Block(string _line) =>  line = _line;
+
+        public Block(string _line) 
+        { 
+            line = _line; 
+        }
 
         /// <summary>Returns the list of tokens from a block</summary>\
         public List<string> Tokenize()
@@ -141,5 +170,4 @@ namespace AxesCore
             return s.StartsWith('(');
         }
     }
-
 }

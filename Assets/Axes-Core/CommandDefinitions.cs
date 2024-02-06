@@ -5,6 +5,7 @@ namespace AxesCore
     {
         public static Dictionary<string, GMode> gModes = new Dictionary<string, GMode>();
         public static Dictionary<string, MMode> mModes = new Dictionary<string, MMode>();
+        public static Dictionary<string, Tool> tools = new Dictionary<string, Tool>();
 
         public delegate void OperationHandler();
 
@@ -117,26 +118,25 @@ namespace AxesCore
             opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
             opHandlers.Add(GMode.G20, CoreEngine.SetInch);
             opHandlers.Add(GMode.G21, CoreEngine.SetMilli);
+            opHandlers.Add(GMode.G94, CoreEngine.SetFeedRate);
+
+            //Group 12 Modal Operators
+            opHandlers.Add(GMode.G54, CoreEngine.SetFixtureOffset1);
+            opHandlers.Add(GMode.G541, CoreEngine.SetAdditionalFixtureOffset);
+            opHandlers.Add(GMode.G55, CoreEngine.SetFixtureOffset2);
+            opHandlers.Add(GMode.G56, CoreEngine.SetFixtureOffset3);
+            opHandlers.Add(GMode.G57, CoreEngine.SetFixtureOffset4);
+            opHandlers.Add(GMode.G58, CoreEngine.SetFixtureOffset5);
+            opHandlers.Add(GMode.G59, CoreEngine.SetFixtureOffset6);
         }
     }
 
     public class Coord
     {
-        public float[] c;
-        //x y z a b c r i j k //Coordinate parameters
-        //0 1 2 3 4 5 6 7 8 9 //Their corresponding indexes
+        public float x, y, z, a, b, c, d, f, p, r, s, t, i, j, k;
 
         public Coord()
         {
-            c = new float[10];
-        }
-
-        public void Reset()
-        {
-            for (int i = 0; i < c.Length; i++)
-            {
-                c[i] = 0;
-            }
         }
     }
 
@@ -158,6 +158,11 @@ namespace AxesCore
 
     }
 
+    public enum Tool : int
+    {
+
+    }
+
     public enum UPM : int
     {
         inches, millimeters, degrees
@@ -171,5 +176,10 @@ namespace AxesCore
     public enum PlaneMode : int
     {
         XY, ZX, YZ
+    }
+
+    public enum CoordMode : int
+    {
+        draw, fixtureOffset, addFixtureOffset
     }
 }

@@ -28,7 +28,8 @@ public class AppManager : MonoBehaviour
 
     void Update()
     {
-        UpdateUI();
+        //Call the function every second not every frame
+        Invoke(nameof(UpdateUI), 1); 
     }
 
     public void SelectFile()
@@ -85,6 +86,7 @@ public class AppManager : MonoBehaviour
                                 "Feed Rate: "     + Core.feedRate + "\n" +
                                 "Dwell Time: "    + Core.dwellTime + "\n" +
                                 "Position Mode: " + Core.positionMode + "\n" +
+                                "Fixture Offset: "+ Core.fixtureOffset + "\n" +
                                 "Arc Mode: "      + Core.arcMode + "\n" +
                                 "Exact Stop: "    + Core.exactStop + "\n" +
                                 "Plane Select: "  + Core.planeMode + "\n" +
