@@ -26,6 +26,19 @@ namespace AxesCore
         }
         #endregion
 
+        #region Group 0 Functions
+
+        public static void SetDwellMode()
+        {
+            Core.coordMode = CoordMode.dwell;
+            CoreEngine.SetCoordMode(CoordMode.dwell);
+        }
+
+        public static void SetDwellTime(float d)
+        {
+            Core.dwellTime = d;
+        }
+
         public static void SetUPM(UPM upm) { Core.upm = upm; }
 
         public static void SetFeedRate() { SetFeedRate(15); }
@@ -33,22 +46,22 @@ namespace AxesCore
 
         public static void SetSpindleSpeed(float s) { Core.spindleSpeed = s; }
 
-        public static void SetDwellTime(float d) { Core.dwellTime = d; }
+        #endregion
 
         #region Group 1 Functions
-        public static void RapidMove() 
-        { 
+        public static void RapidMove()
+        {
             Core.group[1] = GMode.G00;
             Core.coordMode = CoordMode.draw;
         }
-        public static void LinearFeedMove() 
+        public static void LinearFeedMove()
         {
-            Core.group[1] = GMode.G01; 
+            Core.group[1] = GMode.G01;
             Core.coordMode = CoordMode.draw;
         }
-        public static void ClockwiseArcFeedMove() 
-        { 
-            Core.group[1] = GMode.G02; 
+        public static void ClockwiseArcFeedMove()
+        {
+            Core.group[1] = GMode.G02;
             Core.coordMode = CoordMode.draw;
         }
         public static void CounterClockwiseArcFeedMove()
@@ -68,6 +81,7 @@ namespace AxesCore
         }
         #endregion
 
+        #region Group 3 & 4 Functions
         public static void PositionModeAbsolute()
         {
             Core.group[3] = GMode.G90;
@@ -91,7 +105,9 @@ namespace AxesCore
             Core.group[4] = GMode.G911;
             Core.arcMode = PositionMode.arcIncremental;
         }
+        #endregion
 
+        #region Group 2 Functions
         public static void XYPlaneSelect()
         {
             Core.group[2] = GMode.G17;
@@ -107,11 +123,12 @@ namespace AxesCore
             Core.group[2] = GMode.G19;
             Core.planeMode = PlaneMode.YZ;
         }
+        #endregion
 
+        /// <summary>Resets the coordinates in Core to zeroes</summary>
         public static void ResetCoord()
         {
             Core.coord = new();
-            SetCoordMode(CoordMode.draw);
         }
 
         public static void SetCoordMode(CoordMode mode)
@@ -119,23 +136,27 @@ namespace AxesCore
             Core.coordMode = mode;
         }
 
+        /// <summary>Change the unit per measure to Inches</summary>
         public static void SetInch()
         {
             Core.group[6] = GMode.G20;
             Core.upm = UPM.inches;
         }
 
+        /// <summary>Change the unit per measure to Millimeters</summary>
         public static void SetMilli()
         {
             Core.group[6] = GMode.G21;
             Core.upm = UPM.millimeters;
         }
 
-        public static void SetScale()
+        /// <summary>Changes the scale of the simulator</summary>
+        public static void SetScale(float _scale)
         {
-
+            Core.scale = _scale;
         }
 
+        /// <summary>Resets the scale of the simulator</summary>
         public static void Cancelscale()
         {
             Core.scale = 1;
@@ -154,6 +175,7 @@ namespace AxesCore
         public static void SetAdditionalFixtureOffset()
         {
             Core.group[12] = GMode.G541;
+            CoreEngine.SetCoordMode(CoordMode.addFixtureOffset);
         }
         public static void SetFixtureOffset2()
         {
@@ -179,29 +201,34 @@ namespace AxesCore
         {
             Core.group[12] = GMode.G59;
             SetFixtureOffset(6);
+            CoreEngine.SetCoordMode(CoordMode.fixtureOffset);
         }
         #endregion
-        
+
         public static void HandleCoordinates()
         {
             try
             {
+                if(Core.coord.f != 0)
+                {
+                    SetFeedRate(Core.coord.f);
+                }
+
                 //Handle Fixture Offset
                 if (Core.coordMode == CoordMode.fixtureOffset)
                 {
-                    SetFixtureOffset(Int32.Parse((Core.coord.p - 6).ToString()));
+                    SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
                 }
                 else if (Core.coordMode == CoordMode.addFixtureOffset)
                 {
-                    SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
+                    SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
                 }
-                else
+                else if (Core.coordMode == CoordMode.dwell)
                 {
                     SetDwellTime(Core.coord.p);
-                    Core.mode = CoreMode.drawStart;
+                    Core.mode = CoreMode.dwellStart;
                 }
-
-                if (Core.coordMode == CoordMode.draw)
+                else
                 {
                     Core.mode = CoreMode.drawStart;
                 }
@@ -211,11 +238,6 @@ namespace AxesCore
                 ErrorHandler.Error("Error handling the coordinates: " + e);
             }
         }
-    }
-
-    public enum CoreMode : int
-    {
-        pre, waiting, running, done, coord, drawStart, drawEnd
     }
 
     public class Core
@@ -242,10 +264,13 @@ namespace AxesCore
         public static void Init()
         {
             CoreEngine.ResetCoord();
-            mode = CoreMode.pre;
+            mode = CoreMode.waiting;
             upm = UPM.millimeters;
             planeMode = PlaneMode.XY;
-            group = new GMode[16]; //Group 0 to Group 16
+            positionMode = PositionMode.absolute;
+            arcMode = PositionMode.arcAbsolute;
+            group = new GMode[16]; //Defines Group 0 to Group 16
+            scale = 1f;
         }
     }
 }

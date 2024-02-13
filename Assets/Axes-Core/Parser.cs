@@ -5,18 +5,18 @@ namespace AxesCore
 {
     public class Parser
     {
+        /// <summary> Interprets the block and sets the correct parameters on the Core/Core Engine</summary>
         public static void InterpretTokens(List<string> tokens)
         {
-            if(tokens.Count < 1)
-            {
-                ErrorHandler.Log("Empty Token list: " + tokens);
-                return;
-            }
+            //Exit if the token list is empty
+            if(tokens.Count < 1) { ErrorHandler.Log("Empty Token list"); return; }
 
+            //Prepare Core to take new coordinates
             CoreEngine.ResetCoord();
 
             foreach (string token in tokens)
             {
+                ErrorHandler.Log("Interpreting token : " + token);
                 switch (token.ToLower()[0])
                 {
                     case 'g': //Preparatory Instructions
@@ -24,21 +24,6 @@ namespace AxesCore
                         {
                             //Call the appropriate function to handle the instruction
                             CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
-
-                            switch (CommandDefinitions.gModes[token])
-                            {
-                                case GMode.G59:
-                                    CoreEngine.SetCoordMode(CoordMode.fixtureOffset);
-                                    break;
-
-                                case GMode.G541:
-                                    CoreEngine.SetCoordMode(CoordMode.addFixtureOffset);
-                                    break;
-
-                                default:
-                                    CoreEngine.SetCoordMode(CoordMode.draw);
-                                    break;
-                            }
                         }
                         catch (Exception e) 
                         {
@@ -120,6 +105,7 @@ namespace AxesCore
                 }
             }
 
+            //Handle the coordinates set by the parameters above
             CoreEngine.HandleCoordinates();
         }
     
@@ -141,18 +127,28 @@ namespace AxesCore
     /// <summary>Represents A Line Of GCode</summary>
     public class Block
     {
+        /// <summary>The text of that GCode line</summary>
         public string line;
+
+        /// <summary>Describes the block as a comment or not</summary>
+        public bool isAComment = false;
 
         public Block(string _line) 
         { 
             line = _line; 
+            if(line.StartsWith(' ') == true)
+            {
+                isAComment = true;
+            }
         }
 
-        /// <summary>Returns the list of tokens from a block</summary>\
+        ///<summary>Returns the list of tokens(words) from a block</summary>\
         public List<string> Tokenize()
         {
             List<string> tokens = new();
-            tokens.AddRange(line.Split(' ')); //Split the block according to the tokens
+
+            //Split the block using space as a delimitter
+            tokens.AddRange(line.Split(' ')); 
 
             tokens.RemoveAll(IsASpace);
             tokens.RemoveAll(IsAComment);
@@ -160,13 +156,16 @@ namespace AxesCore
             return tokens;
         }
 
+        /// <returns>True if the string is a space</returns>
         private static bool IsASpace(String s)
         {
             return s == " ";
         }
 
+        /// <returns>True if the string is a comment</returns>
         private static bool IsAComment(String s)
         {
+            //TODO: Discard all lines that are comments
             return s.StartsWith('(');
         }
     }

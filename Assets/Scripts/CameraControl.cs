@@ -79,7 +79,6 @@ public class CameraControl : MonoBehaviour
         {
             cam.fieldOfView += _factor;
         }
-        Debug.Log("FOV: " + cam.fieldOfView);
     }
 
     public void ResetCamera()
@@ -95,7 +94,6 @@ public class CameraControl : MonoBehaviour
         ResetUI();
         panImage.color = Color.green;
         mode = CamMode.Pan;
-        Debug.Log("Reset The Camera");
     }
 
     public enum CamMode : int

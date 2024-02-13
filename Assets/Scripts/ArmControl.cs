@@ -1,8 +1,9 @@
-using UnityEngine;
 using AxesCore;
-using System.Linq;
+using System;
+using Unity.VisualScripting;
+using UnityEngine;
 
-public class ArmControl: MonoBehaviour
+public class ArmControl : MonoBehaviour
 {
     [SerializeField] bool running;
 
@@ -11,13 +12,22 @@ public class ArmControl: MonoBehaviour
     [SerializeField] TrailRenderer trail;
 
     [Header("Running Parameters")]
+    /// <summary>The start coordinate for a draw command</summary>
     public Vector3 startCoord;
-    public Vector3 endCoord;
-    public Vector3 centerPoint;
-    public float radius;
-    float d = 0f;
-    bool draw = false;
 
+    /// <summary>The end coordinate for a draw command</summary>
+    public Vector3 endCoord;
+
+    /// <summary>The centerpoint of the arc</summary>
+    public Vector3 centerPoint;
+
+    /// <summary>The radius of the defined arc</summary>
+    public float radius;
+
+    /// <summary>Distance between the start and end points</summary>
+    float d = 0f;
+
+    bool draw = false;
     float timer = 0;
     float degree = 0;
 
@@ -30,108 +40,127 @@ public class ArmControl: MonoBehaviour
 
     void Update()
     {
-        if(Core.mode == CoreMode.drawStart)
+        if (Core.mode == CoreMode.dwellStart)
         {
-            //Linear movements
-            if (Core.group[1] == GMode.G00 || Core.group[1] == GMode.G01)
-            {
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord,t);
-                t += (Core.feedRate/(60*d)) * Time.deltaTime;
-            }
+            Core.dwellTime -= Time.deltaTime;
 
-            //Clockwise Arc Movements
-            if (Core.group[1] == GMode.G02)
+            if(Core.dwellTime <= 0)
             {
-                Vector3 temp = new();
-                radius = CalculateRadius();
-                temp.x = centerPoint.x + (radius * Mathf.Cos(degree));
-                temp.z = centerPoint.z + (radius * Mathf.Sin(degree));
+                Core.dwellTime = 0;
+                Core.mode = CoreMode.dwellEnd;
+            }
+        }
+        else if (Core.mode == CoreMode.drawStart)
+        {
+            if (Core.group[1] == GMode.G00) //Rapid Move
+            {
+                SetCoords(); draw = false;
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                t += Time.deltaTime / d; //Time Control
+            }
+            else if (Core.group[1] == GMode.G01) //Linear Move
+            {
+                SetCoords(); draw = true;
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
+            }
+            else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
+            {
+                SetCoords(); draw = true;
+                Vector3 temp = new()
+                {
+                    x = centerPoint.x + (radius * Mathf.Cos(degree * Mathf.Deg2Rad)),
+                    z = centerPoint.z + (radius * Mathf.Sin(degree * Mathf.Deg2Rad))
+                };
+                
 
                 effector.transform.position = temp;
-                degree += 1 * Time.deltaTime; 
+                degree += 1 * Time.deltaTime; //Time Control
             }
-
-            //Anti-Clockwise Arc Movements
-            if (Core.group[1] == GMode.G03)
+            else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
             {
 
             }
+
+
+            //Timing Control
+            if (t >= 1.0f)
+            {
+                t = 0f;
+                running = false;
+                Core.mode = CoreMode.drawEnd;
+            }
+
+            if (degree >= 90f) //Should be the angle between this 2 vectors
+            {
+                degree = 0f;
+                running = false;
+                Core.mode = CoreMode.drawEnd;
+            }
         }
 
-        if(t >= 1.0f)
-        {
-            t = 0f;
-            Core.mode = CoreMode.drawEnd;
-        }
-
-        if(degree >= 30f) //The distance between this 2 vecors
-        {
-            degree = 0f;
-            Core.mode = CoreMode.drawEnd;
-        }
-    }
-
-    public void Draw()
-    {
-        switch (Core.group[1])
-        {
-            case GMode.G00:
-                draw = false;
-                SetCoords();
-                break;
-
-            case GMode.G01:
-                draw = true;
-                SetCoords();
-                break;
-
-            case GMode.G02:
-                draw = true;
-                SetCoords();
-                break;
-
-            case GMode.G03:
-                draw = true;
-                SetCoords();
-                break;
-
-            case GMode.G04:
-                draw = true;
-                break;
-
-            default:
-                break;
-        }
+        CheckIfDone();
     }
 
     public void SetCoords()
     {
+        if (running == true) return;
         ResetCoords();
 
         if (Core.positionMode == PositionMode.absolute)
         {
-            endCoord = new Vector3(Core.coord.c[0], Core.coord.c[2], Core.coord.c[1]);
+            endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
         }
         else //PositionMode.incremental
         {
-            endCoord = startCoord + new Vector3(Core.coord.c[0], Core.coord.c[2], Core.coord.c[1]);
+            endCoord = startCoord + new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
         }
 
-        if(Core.arcMode == PositionMode.arcAbsolute)
+        Vector3 cp = new Vector3(Core.coord.i, Core.coord.k, Core.coord.j);
+        if (Core.arcMode == PositionMode.arcAbsolute)
         {
-            //X Y Z
-            //I K J
-            centerPoint = new Vector3(Core.coord.c[7], Core.coord.c[9], Core.coord.c[8]);
+            centerPoint = cp;
         }
-        else
+        else //PositionMode.arcIncremental
         {
-            centerPoint = startCoord + new Vector3(Core.coord.c[7], Core.coord.c[9], Core.coord.c[8]);
+            centerPoint = startCoord + cp;
+        }
+
+        if (Core.coord.r == 0 && cp != Vector3.zero) //Calculate and set the radius
+        {
+            //Center Point here should be given in absolute terms
+            ErrorHandler.Log("Drawing an Arc!");
+
+            float r1 = (startCoord- centerPoint).magnitude;
+            float r2 = (endCoord - centerPoint).magnitude;
+
+            if(Mathf.Approximately(r1, r2)) //Check to make sure the points are equidistance
+            {
+                ErrorHandler.Error("R1: " + r1 + " R2: " + r2);
+                throw new Exception("R1 is not equal to R2");
+            }
+
+            radius = r1;
+        }
+        else //Calculate for the centerpoint
+        {
+            radius = Core.coord.r;
         }
 
         d = (endCoord - startCoord).magnitude;
-
         trail.emitting = draw;
+        running = true;
     }
+
+    public void CheckIfDone()
+    {
+        if(Core.mode == CoreMode.drawEnd || Core.mode == CoreMode.dwellEnd)
+        {
+            Core.mode = CoreMode.done;
+        }
+        running = false;
+    }
+
 
     public void ResetCoords()
     {
@@ -141,10 +170,12 @@ public class ArmControl: MonoBehaviour
         startCoord = effector.transform.position;
     }
 
-    public float CalculateRadius()
+    public Vector3 CalculateCentrePoint(Vector3 start, Vector3 end, float radius)
     {
-        Vector3 temp = (startCoord - centerPoint)/2; //Midpoint
+        Vector3 center = Vector3.Lerp(start, end, 0.5f); //Midpoint
 
-        return temp.magnitude;
+
+        //Vector3 centerPoint;
+        return centerPoint.normalized * radius;
     }
 }
