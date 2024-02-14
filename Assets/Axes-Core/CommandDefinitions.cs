@@ -5,6 +5,7 @@ namespace AxesCore
     {
         public static Dictionary<string, GMode> gModes = new Dictionary<string, GMode>();
         public static Dictionary<string, MMode> mModes = new Dictionary<string, MMode>();
+        public static Dictionary<string, Tool> tools = new Dictionary<string, Tool>();
 
         public delegate void OperationHandler();
 
@@ -101,42 +102,52 @@ namespace AxesCore
         {
             opHandlers = new Dictionary<GMode, OperationHandler>();
 
-            //Group 1 Modal Operators
+            //Group 0 Operations
+            opHandlers.Add(GMode.G04, CoreEngine.SetDwellMode);
+
+            //Group 1 Modal Operations
             opHandlers.Add(GMode.G00, CoreEngine.RapidMove);
             opHandlers.Add(GMode.G01, CoreEngine.LinearFeedMove);
             opHandlers.Add(GMode.G02, CoreEngine.ClockwiseArcFeedMove);
             opHandlers.Add(GMode.G03, CoreEngine.CounterClockwiseArcFeedMove);
             opHandlers.Add(GMode.G12, CoreEngine.ClockwiseCircle);
             opHandlers.Add(GMode.G13, CoreEngine.CounterClockwiseCircle);
+
+            //Group 12 Modal Operators
+            opHandlers.Add(GMode.G541, CoreEngine.SetAdditionalFixtureOffset);
+            opHandlers.Add(GMode.G54, CoreEngine.SetFixtureOffset1);
+            opHandlers.Add(GMode.G55, CoreEngine.SetFixtureOffset2);
+            opHandlers.Add(GMode.G56, CoreEngine.SetFixtureOffset3);
+            opHandlers.Add(GMode.G57, CoreEngine.SetFixtureOffset4);
+            opHandlers.Add(GMode.G58, CoreEngine.SetFixtureOffset5);
+            opHandlers.Add(GMode.G59, CoreEngine.SetFixtureOffset6);
+
             opHandlers.Add(GMode.G90, CoreEngine.PositionModeAbsolute);
             opHandlers.Add(GMode.G91, CoreEngine.PositionModeIncremental);
-            opHandlers.Add(GMode.G901,CoreEngine.ArcModeAbsolute);
-            opHandlers.Add(GMode.G911,CoreEngine.ArcModeIncremental);
+            opHandlers.Add(GMode.G901, CoreEngine.ArcModeAbsolute);
+            opHandlers.Add(GMode.G911, CoreEngine.ArcModeIncremental);
             opHandlers.Add(GMode.G17, CoreEngine.XYPlaneSelect);
             opHandlers.Add(GMode.G18, CoreEngine.ZXPlaneSelect);
             opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
             opHandlers.Add(GMode.G20, CoreEngine.SetInch);
             opHandlers.Add(GMode.G21, CoreEngine.SetMilli);
+            opHandlers.Add(GMode.G94, CoreEngine.SetFeedRate);
+
+
         }
     }
 
     public class Coord
     {
-        public float[] c;
-        //x y z a b c r i j k //Coordinate parameters
-        //0 1 2 3 4 5 6 7 8 9 //Their corresponding indexes
+        public float x, y, z, a, b, c, d, f, p, r, s, t, i, j, k;
 
         public Coord()
         {
-            c = new float[10];
-        }
-
-        public void Reset()
-        {
-            for (int i = 0; i < c.Length; i++)
-            {
-                c[i] = 0;
-            }
+            x = 0; y = 0; z = 0;
+            a = 0; b = 0; c = 0;
+            d = 0; f = 0; p = 0; 
+            r = 0; s = 0; t = 0;
+            i = 0; j = 0; k = 0;
         }
     }
 
@@ -155,6 +166,11 @@ namespace AxesCore
 
     public enum MMode : int
     {
+        M30
+    }
+
+    public enum Tool : int
+    {
 
     }
 
@@ -171,5 +187,20 @@ namespace AxesCore
     public enum PlaneMode : int
     {
         XY, ZX, YZ
+    }
+
+    public enum CoordMode : int
+    {
+        draw, dwell, fixtureOffset, addFixtureOffset
+    }
+
+    public enum CoreMode : int
+    {
+        start, waiting, running, done, coord, drawStart, drawEnd, dwellStart, dwellEnd, EOF
+    }
+
+    public enum LoadMode : int
+    {
+        loaded, unloaded
     }
 }
