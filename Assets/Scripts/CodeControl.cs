@@ -19,7 +19,7 @@ public class CodeControl : MonoBehaviour
             else //Move to the next line of the file
             {
                 lineIndex++;
-                ErrorHandler.Log("Increased Index: " + lineIndex);
+                ErrorHandler.Log("Line: " + (lineIndex + 1));
                 ExecuteFile();
             }
         }
@@ -35,8 +35,15 @@ public class CodeControl : MonoBehaviour
     public void ExecuteCode(string line)
     {
         Block block = new Block(line);
-        
-        //Interprets the block and sets the correct parameters
-        Parser.InterpretTokens(block.Tokenize()); 
+        if (block.isAComment == true)
+        {
+            //Skip the comment line
+            Core.mode = CoreMode.done;
+        }
+        else
+        {
+            //Interprets the block and sets the correct parameters
+            Parser.InterpretTokens(block.Tokenize());
+        }
     }
 }

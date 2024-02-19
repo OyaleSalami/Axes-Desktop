@@ -126,20 +126,40 @@ namespace AxesCore
             opHandlers.Add(GMode.G91, CoreEngine.PositionModeIncremental);
             opHandlers.Add(GMode.G901, CoreEngine.ArcModeAbsolute);
             opHandlers.Add(GMode.G911, CoreEngine.ArcModeIncremental);
+
+            //Group 2 Modal Operators
             opHandlers.Add(GMode.G17, CoreEngine.XYPlaneSelect);
             opHandlers.Add(GMode.G18, CoreEngine.ZXPlaneSelect);
             opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
+
+            //Group 6 MOdal Operators
             opHandlers.Add(GMode.G20, CoreEngine.SetInch);
             opHandlers.Add(GMode.G21, CoreEngine.SetMilli);
+
+            //Group 5 Modal Operators
             opHandlers.Add(GMode.G94, CoreEngine.SetFeedRate);
 
+            //Group 7 Modal Operators
+            opHandlers.Add(GMode.G40, CoreEngine.CancelCutterCompensation);
+            opHandlers.Add(GMode.G41, CoreEngine.SetCutterCompensationLeft);
+            opHandlers.Add(GMode.G42, CoreEngine.SetCutterCompensationRight);
 
+            //Group 8 Modal Operators
+            opHandlers.Add(GMode.G49, CoreEngine.ToolLengthOffsetCancel);
+            opHandlers.Add(GMode.G43, CoreEngine.SetToolLengthOffsetPositive);
+            opHandlers.Add(GMode.G44, CoreEngine.SetToolLengthOffsetNegative);
+
+            //Group 16 Modal Operators
+            opHandlers.Add(GMode.G73, CoreEngine.HighSpeedPeck);
+            opHandlers.Add(GMode.G74, CoreEngine.LHTapping);
+            opHandlers.Add(GMode.G76, CoreEngine.FineBoring);
+            opHandlers.Add(GMode.G80, CoreEngine.CancelCannedCycle);
         }
     }
 
     public class Coord
     {
-        public float x, y, z, a, b, c, d, f, p, r, s, t, i, j, k;
+        public float x, y, z, a, b, c, d, f, p, q, r, l, s, t, i, j, k;
 
         public Coord()
         {
@@ -191,16 +211,24 @@ namespace AxesCore
 
     public enum CoordMode : int
     {
-        draw, dwell, fixtureOffset, addFixtureOffset
+        draw, dwell, fixtureOffset, addFixtureOffset, toolDiameter,
+        cutterCompensation, toolLengthOffsetNegative, toolLengthOffsetPositive,
+        highSpeedPeck, lhTapping, fineBoring
     }
 
     public enum CoreMode : int
     {
-        start, waiting, running, done, coord, drawStart, drawEnd, dwellStart, dwellEnd, EOF
+        start, waiting, running, done, coord, drawStart, drawEnd, dwellStart, dwellEnd, EOF,
+        startPeck, cannedCycleDone
     }
 
     public enum LoadMode : int
     {
         loaded, unloaded
+    }
+
+    public enum CutterCompensationMode : int
+    {
+        none, left, right
     }
 }

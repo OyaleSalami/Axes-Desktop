@@ -66,20 +66,31 @@ public class ArmControl : MonoBehaviour
             }
             else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
             {
+                //Drawing Arc Code
                 SetCoords(); draw = true;
-                Vector3 temp = new()
-                {
-                    x = centerPoint.x + (radius * Mathf.Cos(degree * Mathf.Deg2Rad)),
-                    z = centerPoint.z + (radius * Mathf.Sin(degree * Mathf.Deg2Rad))
-                };
-                
+                Vector3 temp = startCoord; 
+                //Centerpoint
+                //{
+                //    x = centerPoint.x + (radius * Mathf.Cos(degree * Mathf.Deg2Rad)),
+                //    z = centerPoint.z + (radius * Mathf.Sin(degree * Mathf.Deg2Rad))
+                //};
 
-                effector.transform.position = temp;
+                //Arc points using circle formula
+                float angleStep = Mathf.PI * 2 / 90;
+                Vector3 direction = (endCoord - startCoord).normalized; //Initial direction
+
+                float angle = degree * angleStep;
+                Vector3 pointOnCircle = temp + (radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0));
+
+                effector.transform.position = pointOnCircle;
                 degree += 1 * Time.deltaTime; //Time Control
+                
             }
             else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
             {
-
+                SetCoords(); draw = true;
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
             }
 
 
@@ -91,12 +102,14 @@ public class ArmControl : MonoBehaviour
                 Core.mode = CoreMode.drawEnd;
             }
 
+            /* Arc Drawing Code
             if (degree >= 90f) //Should be the angle between this 2 vectors
             {
                 degree = 0f;
                 running = false;
                 Core.mode = CoreMode.drawEnd;
             }
+            */
         }
 
         CheckIfDone();
@@ -129,15 +142,12 @@ public class ArmControl : MonoBehaviour
         if (Core.coord.r == 0 && cp != Vector3.zero) //Calculate and set the radius
         {
             //Center Point here should be given in absolute terms
-            ErrorHandler.Log("Drawing an Arc!");
-
-            float r1 = (startCoord- centerPoint).magnitude;
+            float r1 = (startCoord - centerPoint).magnitude;
             float r2 = (endCoord - centerPoint).magnitude;
 
-            if(Mathf.Approximately(r1, r2)) //Check to make sure the points are equidistance
+            if(r1 != r2) //Check to make sure the points are equidistance
             {
                 ErrorHandler.Error("R1: " + r1 + " R2: " + r2);
-                throw new Exception("R1 is not equal to R2");
             }
 
             radius = r1;
@@ -145,6 +155,7 @@ public class ArmControl : MonoBehaviour
         else //Calculate for the centerpoint
         {
             radius = Core.coord.r;
+            centerPoint = CalculateCentrePoint(startCoord, endCoord, radius);
         }
 
         d = (endCoord - startCoord).magnitude;
@@ -172,10 +183,28 @@ public class ArmControl : MonoBehaviour
 
     public Vector3 CalculateCentrePoint(Vector3 start, Vector3 end, float radius)
     {
+        ErrorHandler.Log("Calculating the centerpoint");
+        float r = radius;
+        float d = (end - start).magnitude;
         Vector3 center = Vector3.Lerp(start, end, 0.5f); //Midpoint
+        //Vector3 center = (start + end) / 2;
+
+        Vector3 cp = new();
+
+        if (r < 0) //First Circle (Negative r)
+        {
+            cp.x = center.x + Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * ((start.y - end.y) / d));
+            cp.y = center.y + Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * ((end.x - start.x) / d));
+        }
+        else //Second Cirle (Positive r)
+        {
+            cp.x = center.x - Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * (start.y - end.y) / d);
+            cp.y = center.y - Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * (end.x - start.x) / d);
+        }
 
 
         //Vector3 centerPoint;
-        return centerPoint.normalized * radius;
+        return cp;
     }
+
 }

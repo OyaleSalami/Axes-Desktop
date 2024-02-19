@@ -205,6 +205,64 @@ namespace AxesCore
         }
         #endregion
 
+        #region Group 7 Functions
+        public static void CancelCutterCompensation()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.none;
+        }
+
+        public static void SetCutterCompensationLeft()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.left;
+            Core.coordMode = CoordMode.cutterCompensation;
+        }
+
+        public static void SetCutterCompensationRight()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.right;
+            Core.coordMode = CoordMode.cutterCompensation;
+        }
+        #endregion
+
+        #region Group 8 Functions
+        public static void ToolLengthOffsetCancel()
+        {
+            Core.toolLengthOffset = 0f;
+        }
+
+        public static void SetToolLengthOffsetNegative()
+        {
+            Core.coordMode = CoordMode.toolLengthOffsetNegative;
+        }
+
+        public static void SetToolLengthOffsetPositive()
+        {
+            Core.coordMode = CoordMode.toolLengthOffsetPositive;
+        }
+        #endregion
+
+        #region Group 16 Functions
+        public static void HighSpeedPeck()
+        {
+            Core.coordMode = CoordMode.highSpeedPeck;
+        }
+
+        public static void LHTapping()
+        {
+            Core.coordMode = CoordMode.lhTapping;
+        }
+
+        public static void FineBoring()
+        {
+            Core.coordMode = CoordMode.fineBoring;
+        }
+
+        public static void CancelCannedCycle()
+        {
+            Core.cannedCycle = false;
+        }
+        #endregion
+
         public static void HandleCoordinates()
         {
             try
@@ -214,23 +272,25 @@ namespace AxesCore
                     SetFeedRate(Core.coord.f);
                 }
 
-                //Handle Fixture Offset
-                if (Core.coordMode == CoordMode.fixtureOffset)
+                //Handle Different Use Cases Of Parameters
+                switch (Core.coordMode)
                 {
-                    SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
-                }
-                else if (Core.coordMode == CoordMode.addFixtureOffset)
-                {
-                    SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
-                }
-                else if (Core.coordMode == CoordMode.dwell)
-                {
-                    SetDwellTime(Core.coord.p);
-                    Core.mode = CoreMode.dwellStart;
-                }
-                else
-                {
-                    Core.mode = CoreMode.drawStart;
+                    case CoordMode.fixtureOffset:
+                        SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
+                        break;
+                    case CoordMode.addFixtureOffset:
+                        SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
+                        break;
+                    case CoordMode.dwell:
+                        SetDwellTime(Core.coord.p);
+                        Core.mode = CoreMode.dwellStart;
+                        break;
+                    case CoordMode.highSpeedPeck:
+                        Core.mode = CoreMode.startPeck;
+                        break;
+                    default:
+                        Core.mode = CoreMode.drawStart;
+                        break;
                 }
             }
             catch (Exception e)
@@ -246,14 +306,17 @@ namespace AxesCore
         public static PositionMode arcMode;
         public static PositionMode positionMode;
         public static PlaneMode planeMode;
+        public static CutterCompensationMode cutterCompensationMode;
         public static Tool tool;
         public static float toolDiameter = 1.0f;
         public static float toolHeight = 1.0f;
+        public static float toolLengthOffset = 0f;
         public static int fixtureOffset = 1;
         public static float scale = 1;
         public static float feedRate = 15;
         public static float dwellTime = 0;
         public static bool exactStop = false;
+        public static bool cannedCycle = false;
         public static float spindleSpeed;
 
         public static CoreMode mode;

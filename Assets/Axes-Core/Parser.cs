@@ -32,19 +32,25 @@ namespace AxesCore
                         break;
 
                     case 'm': //Set any extra mode
-                        CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
+                        //CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
+                        ErrorHandler.Log("MCode: " + token);
                         break;
 
                     case 't': //Set the current tool
-                        CoreEngine.SetTool(CommandDefinitions.tools[token]);
+                        //CoreEngine.SetTool(CommandDefinitions.tools[token]);
+                        ErrorHandler.Log("MCode: " + token);
                         break;
 
-                    case 'd': //Set tool diameter
-                        CoreEngine.SetToolDiameter(ReadValue(token));
-                        break;
-
-                    case 'h': //Set tool diameter
+                    case 'h': //Set the h coordinate
                         CoreEngine.SetToolHeight(ReadValue(token));
+                        break;
+
+                    case 'd': //Set the d coordinate
+                        Core.coord.d = ReadValue(token);
+                        break;
+
+                    case 'q': //Set the q coordinate
+                        Core.coord.q = ReadValue(token);
                         break;
 
                     case 'p': //Set the P coordinate
@@ -99,6 +105,10 @@ namespace AxesCore
                         Core.coord.k = ReadValue(token);
                         break;
 
+                    case '%': //End of the program
+                        Core.mode = CoreMode.EOF;
+                        break;
+
                     default:
                         ErrorHandler.Error("Undefined token: " + token);
                         break;
@@ -136,7 +146,9 @@ namespace AxesCore
         public Block(string _line) 
         { 
             line = _line; 
-            if(line.StartsWith(' ') == true)
+
+            //NOTE: Temporary line here
+            if(line.StartsWith('(') == true || line.Length == 0 || line.StartsWith('\n'))
             {
                 isAComment = true;
             }
@@ -151,7 +163,6 @@ namespace AxesCore
             tokens.AddRange(line.Split(' ')); 
 
             tokens.RemoveAll(IsASpace);
-            tokens.RemoveAll(IsAComment);
 
             return tokens;
         }
