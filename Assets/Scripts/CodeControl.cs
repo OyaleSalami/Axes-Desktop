@@ -9,7 +9,7 @@ public class CodeControl : MonoBehaviour
 
     public void Update()
     {
-        if (Core.mode == CoreMode.done && AppManager.loadMode == LoadMode.loaded)
+        if (Core.mode == CoreMode.normal && AppManager.loadMode == LoadMode.loaded)
         {
             if (lineIndex >= AppManager.fileBuffer.Count - 1)
             {
@@ -18,31 +18,24 @@ public class CodeControl : MonoBehaviour
             }
             else //Move to the next line of the file
             {
+                ExecuteCode(AppManager.fileBuffer[lineIndex]);
                 lineIndex++;
-                ErrorHandler.Log("Line: " + (lineIndex + 1));
-                ExecuteFile();
+                //ErrorHandler.Log("Line: " + (lineIndex + 1));
             }
         }
-    }
-
-    public void ExecuteFile()
-    {
-        Core.mode = CoreMode.start;
-        ExecuteCode(AppManager.fileBuffer[lineIndex]);
     }
 
     /// <summary>Executes a single line of NC code </summary>
     public void ExecuteCode(string line)
     {
         Block block = new Block(line);
-        if (block.isAComment == true)
+        if (block.isNotValid == true)
         {
-            //Skip the comment line
-            Core.mode = CoreMode.done;
+            Core.mode = CoreMode.normal;
         }
         else
         {
-            //Interprets the block and sets the correct parameters
+            //Interprets the block and sets the correct parameters for the Core
             Parser.InterpretTokens(block.Tokenize());
         }
     }

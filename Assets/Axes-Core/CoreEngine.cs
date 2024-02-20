@@ -1,4 +1,6 @@
 using System;
+using Unity.VisualScripting.Antlr3.Runtime;
+using UnityEngine;
 
 namespace AxesCore
 {
@@ -6,13 +8,14 @@ namespace AxesCore
     {
         public static void SetMMode(MMode mode)
         {
-
+            ErrorHandler.Log("MCode: " + mode);
         }
 
         #region Tool Functions
         public static void SetTool(Tool tool)
         {
             Core.tool = tool;
+            ErrorHandler.Log("Tool: " + tool);
         }
 
         public static void SetToolDiameter(float value)
@@ -151,15 +154,15 @@ namespace AxesCore
         }
 
         /// <summary>Changes the scale of the simulator</summary>
-        public static void SetScale(float _scale)
+        public static void SetScale()
         {
-            Core.scale = _scale;
+            Core.scale = new Vector3(Core.coord.x, Core.coord.z , Core.coord.y);
         }
 
         /// <summary>Resets the scale of the simulator</summary>
         public static void Cancelscale()
         {
-            Core.scale = 1;
+            Core.scale = new(1, 1, 1);
         }
 
         #region Group 12 Functions
@@ -288,8 +291,15 @@ namespace AxesCore
                     case CoordMode.highSpeedPeck:
                         Core.mode = CoreMode.startPeck;
                         break;
-                    default:
+                    case CoordMode.scale:
+                        SetScale();
+                        break;
+                    case CoordMode.draw:
+                        ErrorHandler.Log("Set to draw");
                         Core.mode = CoreMode.drawStart;
+                        break;
+                    default:
+                        Core.mode = CoreMode.normal;
                         break;
                 }
             }
@@ -300,40 +310,57 @@ namespace AxesCore
         }
     }
 
+    /// <summary>Holds the importatnt parameters needed to run the simulator</summary>
     public class Core
     {
+        /// <summary>The Unit the simulator is working with</summary>
         public static UPM upm;
-        public static PositionMode arcMode;
-        public static PositionMode positionMode;
-        public static PlaneMode planeMode;
-        public static CutterCompensationMode cutterCompensationMode;
+
+        /// <summary>The current selected tool</summary>
         public static Tool tool;
-        public static float toolDiameter = 1.0f;
-        public static float toolHeight = 1.0f;
-        public static float toolLengthOffset = 0f;
+
+        /// <summary>The plane being used</summary>
+        public static PlaneMode planeMode;
+
+        /// <summary>Arc mode: absolute or incremental</summary>
+        public static PositionMode arcMode;
+
+        /// <summary>Position mode: absolute or incremental</summary>
+        public static PositionMode positionMode;
+
+        public static CutterCompensationMode cutterCompensationMode;
+
+        /// <summary>The sclae that should be applied to the different axes</summary>
+        public static Vector3 scale;
+
         public static int fixtureOffset = 1;
-        public static float scale = 1;
-        public static float feedRate = 15;
         public static float dwellTime = 0;
+        public static float feedRate = 15;
+        public static float spindleSpeed = 0;
+        public static float toolHeight = 1.0f;
+        public static float toolDiameter = 1.0f;
+        public static float toolLengthOffset = 0f;
+
         public static bool exactStop = false;
         public static bool cannedCycle = false;
-        public static float spindleSpeed;
 
         public static CoreMode mode;
         public static Coord coord;
         public static CoordMode coordMode;
         public static GMode[] group;
 
+        /// <summary>Sets/Resets the parameters for the Core</summary>
         public static void Init()
         {
-            CoreEngine.ResetCoord();
-            mode = CoreMode.waiting;
+            coord = new Coord();
+            mode = CoreMode.normal; //The default state of the simulator
             upm = UPM.millimeters;
             planeMode = PlaneMode.XY;
             positionMode = PositionMode.absolute;
             arcMode = PositionMode.arcAbsolute;
-            group = new GMode[16]; //Defines Group 0 to Group 16
-            scale = 1f;
+
+            group = new GMode[16]; //Create the Group 0 to Group 16
+            scale = new(1f, 1f, 1f); //Set the default scale
         }
     }
 }

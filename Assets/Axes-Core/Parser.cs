@@ -9,40 +9,42 @@ namespace AxesCore
         public static void InterpretTokens(List<string> tokens)
         {
             //Exit if the token list is empty
-            if(tokens.Count < 1) { ErrorHandler.Log("Empty Token list"); return; }
+            if(tokens.Count < 1) { ErrorHandler.Error("Empty Token List"); return; }
 
             //Prepare Core to take new coordinates
             CoreEngine.ResetCoord();
 
+            //Cycle through all the tokens and set the parameters and call the appropriate functions
             foreach (string token in tokens)
             {
                 ErrorHandler.Log("Interpreting token : " + token);
-                switch (token.ToLower()[0])
+                switch (token.ToLower()[0]) //Match the first letter of the token
                 {
                     case 'g': //Preparatory Instructions
-                        try
+                        try //Call the appropriate function to handle the instruction
                         {
-                            //Call the appropriate function to handle the instruction
                             CommandDefinitions.opHandlers[CommandDefinitions.gModes[token]]();
                         }
                         catch (Exception e) 
-                        {
-                            ErrorHandler.Error("Unhandled gcode: " + e.ToString());
+                        { 
+                            ErrorHandler.Error("Unhandled gcode: " + e.ToString()); 
                         }
                         break;
 
-                    case 'm': //Set any extra mode
-                        //CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
-                        ErrorHandler.Log("MCode: " + token);
+                    case 'm': //Set up any extra mode
+                        CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
                         break;
 
                     case 't': //Set the current tool
-                        //CoreEngine.SetTool(CommandDefinitions.tools[token]);
-                        ErrorHandler.Log("MCode: " + token);
+                        CoreEngine.SetTool(CommandDefinitions.tools[token]);
                         break;
 
                     case 'h': //Set the h coordinate
-                        CoreEngine.SetToolHeight(ReadValue(token));
+                        Core.coord.h = ReadValue(token);
+                        break;
+
+                    case 'l': //Set the l coordinate
+                        Core.coord.l = ReadValue(token);
                         break;
 
                     case 'd': //Set the d coordinate
@@ -119,12 +121,12 @@ namespace AxesCore
             CoreEngine.HandleCoordinates();
         }
     
+        /// <summary>Takes a token and reads the value specified after it</summary>
         private static float ReadValue(string token)
         {
-            float f = 0;
             string temp = token.Remove(0, 1); //Remove the first letter
 
-            if (float.TryParse(temp, out f) != true)
+            if (float.TryParse(temp, out float f) != true)
             {
                 ErrorHandler.Error("Unable to convert float: " + token);
                 throw new Exception("Unable to convert to float");
@@ -140,17 +142,16 @@ namespace AxesCore
         /// <summary>The text of that GCode line</summary>
         public string line;
 
-        /// <summary>Describes the block as a comment or not</summary>
-        public bool isAComment = false;
+        /// <summary>Inavlid Block(Comment, Empty Block, ...)</summary>
+        public bool isNotValid = false;
 
         public Block(string _line) 
         { 
             line = _line; 
 
-            //NOTE: Temporary line here
             if(line.StartsWith('(') == true || line.Length == 0 || line.StartsWith('\n'))
             {
-                isAComment = true;
+                isNotValid = true; //Set the line as invalid
             }
         }
 
@@ -159,25 +160,16 @@ namespace AxesCore
         {
             List<string> tokens = new();
 
-            //Split the block using space as a delimitter
-            tokens.AddRange(line.Split(' ')); 
-
-            tokens.RemoveAll(IsASpace);
-
+            tokens.AddRange(line.Split(' '));  //Split the block using space as a delimitter
+            tokens.RemoveAll(IsASpace); //Remove all the extra spaces from the code
             return tokens;
         }
 
-        /// <returns>True if the string is a space</returns>
+        /// <returns>True if the string is just a space</returns>
         private static bool IsASpace(String s)
         {
             return s == " ";
         }
-
-        /// <returns>True if the string is a comment</returns>
-        private static bool IsAComment(String s)
-        {
-            //TODO: Discard all lines that are comments
-            return s.StartsWith('(');
-        }
     }
+
 }

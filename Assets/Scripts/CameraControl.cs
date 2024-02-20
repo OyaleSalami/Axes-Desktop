@@ -1,5 +1,6 @@
-using System;
+using AxesCore;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class CameraControl : MonoBehaviour
@@ -35,11 +36,6 @@ public class CameraControl : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            ResetCamera();
-        }
-
         if (Input.mouseScrollDelta.sqrMagnitude > 0)
         {
             ZoomCamera(-Input.mouseScrollDelta.y);
@@ -68,17 +64,18 @@ public class CameraControl : MonoBehaviour
         ResetUI();
         if (_mode == 0) panImage.color = Color.green;
         if (_mode == 1) rotImage.color = Color.green;
-
-        Debug.Log("Camera Mode Set To: " + (CamMode)_mode);
     }
 
     public void ZoomCamera(float _factor)
     {
         Camera cam = GetComponent<Camera>();
-        if (cam.fieldOfView > 30 && cam.fieldOfView < 90)
+        if (cam.fieldOfView >= 20 && cam.fieldOfView <= 90)
         {
             cam.fieldOfView += _factor;
         }
+
+        if (cam.fieldOfView < 20) cam.fieldOfView = 20;
+        if (cam.fieldOfView > 90) cam.fieldOfView = 90;
     }
 
     public void ResetCamera()
@@ -96,18 +93,23 @@ public class CameraControl : MonoBehaviour
         mode = CamMode.Pan;
     }
 
+    public void Reload()
+    {
+        SceneManager.LoadScene("Main Scene", LoadSceneMode.Single);
+    }
+
     public enum CamMode : int
     {
         Pan = 0,
         Rotate = 1
     }
 
-    #region UI Handling
     public void ResetUI()
     {
-        panImage.color = Color.white;
-        rotImage.color = Color.white;
-        resetImage.color = Color.white;
+        float val = 133f/255f;
+
+        panImage.color = new Color(val, val, val);
+        rotImage.color = new Color(val, val, val);
+        resetImage.color = new Color(val, val, val);
     }
-    #endregion
 }

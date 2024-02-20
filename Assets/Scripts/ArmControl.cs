@@ -1,6 +1,4 @@
 using AxesCore;
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ArmControl : MonoBehaviour
@@ -24,6 +22,9 @@ public class ArmControl : MonoBehaviour
     /// <summary>The radius of the defined arc</summary>
     public float radius;
 
+    /// <summary>The angle between the end and start points in degrees</summary>
+    float angle = 0f;
+
     /// <summary>Distance between the start and end points</summary>
     float d = 0f;
 
@@ -44,7 +45,7 @@ public class ArmControl : MonoBehaviour
         {
             Core.dwellTime -= Time.deltaTime;
 
-            if(Core.dwellTime <= 0)
+            if (Core.dwellTime <= 0)
             {
                 Core.dwellTime = 0;
                 Core.mode = CoreMode.dwellEnd;
@@ -54,72 +55,76 @@ public class ArmControl : MonoBehaviour
         {
             if (Core.group[1] == GMode.G00) //Rapid Move
             {
-                SetCoords(); draw = false;
+                draw = false; SetCoords();
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                 t += Time.deltaTime / d; //Time Control
             }
             else if (Core.group[1] == GMode.G01) //Linear Move
             {
-                SetCoords(); draw = true;
+                draw = true; SetCoords(); 
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                 t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
             }
             else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
             {
-                //Drawing Arc Code
-                SetCoords(); draw = true;
-                Vector3 temp = startCoord; 
-                //Centerpoint
-                //{
-                //    x = centerPoint.x + (radius * Mathf.Cos(degree * Mathf.Deg2Rad)),
-                //    z = centerPoint.z + (radius * Mathf.Sin(degree * Mathf.Deg2Rad))
-                //};
-
-                //Arc points using circle formula
-                float angleStep = Mathf.PI * 2 / 90;
-                Vector3 direction = (endCoord - startCoord).normalized; //Initial direction
-
-                float angle = degree * angleStep;
-                Vector3 pointOnCircle = temp + (radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0));
+                draw = true; SetCoords(true);
+                float drawAngle = Mathf.LerpAngle(0, angle, degree/angle);
+                Vector3 pointOnCircle = centerPoint + radius * new Vector3(Mathf.Cos(drawAngle), 0, Mathf.Sin(drawAngle));
 
                 effector.transform.position = pointOnCircle;
                 degree += 1 * Time.deltaTime; //Time Control
-                
             }
             else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
             {
-                SetCoords(); draw = true;
+                draw = true; SetCoords(true); 
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                 t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
             }
 
-
             //Timing Control
             if (t >= 1.0f)
             {
-                t = 0f;
-                running = false;
+                t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd;
+                ErrorHandler.Log("Done with Linear Drawing!");
             }
 
-            /* Arc Drawing Code
-            if (degree >= 90f) //Should be the angle between this 2 vectors
+            //Arc Draw Timing Control
+            if (degree > angle) //Should be the angle between these 2 vectors
             {
-                degree = 0f;
-                running = false;
-                Core.mode = CoreMode.drawEnd;
+                degree = 0f; //running = false;
+                //Core.mode = CoreMode.drawEnd;
+                ErrorHandler.Log("Done with Arc Drawing!");
             }
-            */
         }
 
         CheckIfDone();
     }
 
-    public void SetCoords()
+    public void SetCoords(bool drawArcs = false)
     {
-        if (running == true) return;
+        if(running == true) 
+        { 
+            ErrorHandler.Log("Already running!");  
+            return; 
+        }
         ResetCoords();
 
+        SetLinearCoords(); //Set the linear coordinates
+
+        if (drawArcs == true)
+        {
+            SetArcCoords(); //Set the arc coordinates if that setting is on
+        }
+
+        trail.emitting = draw; //Determines whether a trail would be drawn or not
+        running = true; //Sets the run state of the machine to true
+    }
+
+    /// <summary>Sets the coordinates required to draw linear lines</summary>
+    public void SetLinearCoords()
+    {
+        ErrorHandler.Log("Setting the Linear Coords");
         if (Core.positionMode == PositionMode.absolute)
         {
             endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
@@ -129,6 +134,13 @@ public class ArmControl : MonoBehaviour
             endCoord = startCoord + new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
         }
 
+        d = (endCoord - startCoord).magnitude; //Distance between the start and end points
+    }
+
+    public void SetArcCoords()
+    {
+        ErrorHandler.Log("Setting the Arc Coords");
+        
         Vector3 cp = new Vector3(Core.coord.i, Core.coord.k, Core.coord.j);
         if (Core.arcMode == PositionMode.arcAbsolute)
         {
@@ -145,37 +157,36 @@ public class ArmControl : MonoBehaviour
             float r1 = (startCoord - centerPoint).magnitude;
             float r2 = (endCoord - centerPoint).magnitude;
 
-            if(r1 != r2) //Check to make sure the points are equidistance
+            if (r1 != r2) //Check to make sure the points are equidistance
             {
                 ErrorHandler.Error("R1: " + r1 + " R2: " + r2);
             }
 
-            radius = r1;
+            radius = r2;
         }
-        else //Calculate for the centerpoint
+        else //Calculate for the Centerpoint
         {
             radius = Core.coord.r;
             centerPoint = CalculateCentrePoint(startCoord, endCoord, radius);
         }
 
-        d = (endCoord - startCoord).magnitude;
-        trail.emitting = draw;
-        running = true;
+        angle = CalculateAngle(startCoord, endCoord, centerPoint);
     }
-
+    
     public void CheckIfDone()
     {
-        if(Core.mode == CoreMode.drawEnd || Core.mode == CoreMode.dwellEnd)
+        if (Core.mode == CoreMode.drawEnd || Core.mode == CoreMode.dwellEnd)
         {
             Core.mode = CoreMode.done;
+            running = false;
+            ErrorHandler.Log("Done With The Command!");
         }
-        running = false;
     }
-
 
     public void ResetCoords()
     {
         d = 0; degree = 0;
+        angle = 0; radius = 0;
         endCoord = new();
         centerPoint = new();
         startCoord = effector.transform.position;
@@ -207,4 +218,11 @@ public class ArmControl : MonoBehaviour
         return cp;
     }
 
+    /// <summary>Returns the degree of the angle between these 2 vectors in degrees</summary>
+    public float CalculateAngle(Vector3 start, Vector3 end, Vector3 cp)
+    {
+        Vector3 a = start - cp;
+        Vector3 b = end - cp;
+        return Mathf.Acos(Vector3.Dot(a, b) / (a.magnitude * b.magnitude)) * Mathf.Rad2Deg;
+    }
 }
