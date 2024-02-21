@@ -1,4 +1,5 @@
 using AxesCore;
+using SFB;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +16,7 @@ public class AppManager : MonoBehaviour
     [SerializeField] GameObject displayPanel;
 
     [Header("NC Code File Path")]
+    private System.Windows.Forms.OpenFileDialog fileDialog;
     public static List<string> fileBuffer;
     public CodeControl codeController;
     public static LoadMode loadMode;
@@ -31,8 +33,22 @@ public class AppManager : MonoBehaviour
     /// <summary>Brings up the context menu to select an NC file</summary>
     public void SelectFile()
     {
-        string ncType = NativeFilePicker.ConvertExtensionToFileType("nc"); //Define the extension
-        NativeFilePicker.PickFile(LoadFile, ncType); //Bring up the context menu
+        //RequestPermissionAsynchronously(); //Request for file permissions
+        //NativeFilePicker.PickFile(LoadFile, ncType); //Bring up the context menu
+
+        // Open file with filter
+        var extensions = new[] 
+        {
+            new ExtensionFilter("NC Files", "nc" ),
+        };
+
+        var path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false);
+        LoadFile(path[0]);
+    }
+
+    private async void RequestPermissionAsynchronously(bool readPermissionOnly = false)
+    {
+        NativeFilePicker.Permission permission = await NativeFilePicker.RequestPermissionAsync(readPermissionOnly);
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>
@@ -99,5 +115,5 @@ public class AppManager : MonoBehaviour
         Invoke(nameof(UpdateUI), 1f); //Update UI every second not every frame (Sort of a delayed recursive loop)   
     }
 
-    public void Quit() => Application.Quit();
+    public void Quit() => UnityEngine.Application.Quit();
 }

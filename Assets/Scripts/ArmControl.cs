@@ -177,7 +177,7 @@ public class ArmControl : MonoBehaviour
     {
         if (Core.mode == CoreMode.drawEnd || Core.mode == CoreMode.dwellEnd)
         {
-            Core.mode = CoreMode.done;
+            Core.mode = CoreMode.normal;
             running = false;
             ErrorHandler.Log("Done With The Command!");
         }
