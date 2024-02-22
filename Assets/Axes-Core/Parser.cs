@@ -32,11 +32,11 @@ namespace AxesCore
                         break;
 
                     case 'm': //Set up any extra mode
-                        CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
+                        //CoreEngine.SetMMode(CommandDefinitions.mModes[token]);
                         break;
 
                     case 't': //Set the current tool
-                        CoreEngine.SetTool(CommandDefinitions.tools[token]);
+                        //CoreEngine.SetTool(CommandDefinitions.tools[token]);
                         break;
 
                     case 'h': //Set the h coordinate

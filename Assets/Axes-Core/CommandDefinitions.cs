@@ -178,6 +178,15 @@ namespace AxesCore
             p = 0; q = 0; l = 0;
             r = 0; s = 0; t = 0;
         }
+
+        public bool isZero()
+        {
+            if(x == 0 && y == 0 && z == 0 && a == 0 && b == 0 && c == 0 && i == 0 && j ==  0 && k == 0 && r == 0)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 
     /// <summary>Preparatory Codes (GCodes)</summary>

@@ -11,15 +11,15 @@ public class AppManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] Text codeLine;
     [SerializeField] Text titleText;
-    [SerializeField] Text dataLog;
     [SerializeField] Text machineVariables;
     [SerializeField] GameObject displayPanel;
+    [SerializeField] GameObject grid;
 
     [Header("NC Code File Path")]
     private System.Windows.Forms.OpenFileDialog fileDialog;
     public static List<string> fileBuffer;
     public CodeControl codeController;
-    public static LoadMode loadMode;
+    public static LoadMode loadMode = LoadMode.unloaded;
 
     void Start()
     {
@@ -33,22 +33,12 @@ public class AppManager : MonoBehaviour
     /// <summary>Brings up the context menu to select an NC file</summary>
     public void SelectFile()
     {
-        //RequestPermissionAsynchronously(); //Request for file permissions
-        //NativeFilePicker.PickFile(LoadFile, ncType); //Bring up the context menu
+        // Create filter
+        var extensions = new[]{ new ExtensionFilter("NC Files", "nc" ) };
 
-        // Open file with filter
-        var extensions = new[] 
-        {
-            new ExtensionFilter("NC Files", "nc" ),
-        };
-
-        var path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, false);
+        //Open the context menu
+        var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
         LoadFile(path[0]);
-    }
-
-    private async void RequestPermissionAsynchronously(bool readPermissionOnly = false)
-    {
-        NativeFilePicker.Permission permission = await NativeFilePicker.RequestPermissionAsync(readPermissionOnly);
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>
@@ -70,9 +60,10 @@ public class AppManager : MonoBehaviour
                 ErrorHandler.Error("Error Reading file: " + e);
             }
 
-            loadMode = LoadMode.loaded; //Set the file loaded moad
             string filename = Path.GetFileName(path); //Get the name of the file
+            ErrorHandler.Log("[File]: " + filename);
             SetTitleText("Axes - " + filename); //Set the tile of the window to the name of the file
+            loadMode = LoadMode.loaded; //Set the file loaded mode
         }
     }
 
@@ -92,13 +83,6 @@ public class AppManager : MonoBehaviour
     /// <summary> Updates the UI for the Core Variables and Debug Handler </summary>
     public void UpdateUI()
     {
-        //Update the text for the Debbuger
-        dataLog.text = "";
-        foreach (var item in ErrorHandler.logs)
-        {
-            dataLog.text += "\n" + item;
-        }
-
         //Update the text for the Core variables
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
                                 "Feed Rate: " + Core.feedRate + "\n" +
@@ -115,5 +99,15 @@ public class AppManager : MonoBehaviour
         Invoke(nameof(UpdateUI), 1f); //Update UI every second not every frame (Sort of a delayed recursive loop)   
     }
 
+    public void OpenLog()
+    {
+        Application.OpenURL(ErrorHandler.filePath); //Try to open the log file in notepad or something
+    }
+
+    public void ToggleGrid()
+    {
+        grid.SetActive(!grid.activeSelf);
+    }
+
     public void Quit() => UnityEngine.Application.Quit();
-}
+};

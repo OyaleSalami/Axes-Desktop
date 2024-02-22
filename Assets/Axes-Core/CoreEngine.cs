@@ -1,5 +1,4 @@
 using System;
-using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 
 namespace AxesCore
@@ -132,6 +131,7 @@ namespace AxesCore
         public static void ResetCoord()
         {
             Core.coord = new();
+            Core.coordMode = CoordMode.nil;
         }
 
         public static void SetCoordMode(CoordMode mode)
@@ -268,14 +268,20 @@ namespace AxesCore
 
         public static void HandleCoordinates()
         {
+            ErrorHandler.Log("Handling Coordinates");
             try
             {
                 if(Core.coord.f != 0)
                 {
                     SetFeedRate(Core.coord.f);
                 }
+                if(Core.coord.h != 0)
+                {
+                    SetToolHeight(Core.coord.h);
+                }
 
                 //Handle Different Use Cases Of Parameters
+                ErrorHandler.Log("Passed Coord Mode: " + Core.coordMode.ToString());
                 switch (Core.coordMode)
                 {
                     case CoordMode.fixtureOffset:
@@ -285,6 +291,7 @@ namespace AxesCore
                         SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
                         break;
                     case CoordMode.dwell:
+                        ErrorHandler.Log("Coord Mode: dwell");
                         SetDwellTime(Core.coord.p);
                         Core.mode = CoreMode.dwellStart;
                         break;
@@ -292,16 +299,17 @@ namespace AxesCore
                         Core.mode = CoreMode.startPeck;
                         break;
                     case CoordMode.scale:
+                        ErrorHandler.Log("Coord Mode: scale");
                         SetScale();
                         break;
                     case CoordMode.draw:
-                        ErrorHandler.Log("Set to draw");
                         Core.mode = CoreMode.drawStart;
                         break;
                     default:
-                        Core.mode = CoreMode.normal;
+                        Core.mode = Core.coord.isZero() ? CoreMode.normal : CoreMode.drawStart;
                         break;
                 }
+                ErrorHandler.Log("Core Mode: " + Core.mode);
             }
             catch (Exception e)
             {
@@ -346,6 +354,8 @@ namespace AxesCore
 
         public static CoreMode mode;
         public static Coord coord;
+
+        /// <summary>Determines what the coordinates should be used for</summary>
         public static CoordMode coordMode;
         public static GMode[] group;
 

@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class ArmControl : MonoBehaviour
 {
+    [Header("Miscellenous")]
+    [SerializeField] GameObject drawHolder;
+
     [SerializeField] bool running;
 
     [Header("Effector Parameters")]
@@ -31,13 +34,13 @@ public class ArmControl : MonoBehaviour
     bool draw = false;
     float timer = 0;
     float degree = 0;
+    float t = 0f; //For Timing LERP operations
 
     void Start()
     {
         running = false;
     }
 
-    static float t = 0f; //For Timing LERP operations
 
     void Update()
     {
@@ -45,27 +48,47 @@ public class ArmControl : MonoBehaviour
         {
             Core.dwellTime -= Time.deltaTime;
 
-            if (Core.dwellTime <= 0)
+            if (Core.dwellTime <= 0) //Timing Control
             {
                 Core.dwellTime = 0;
                 Core.mode = CoreMode.dwellEnd;
+                ErrorHandler.Log("Done with dwell");
             }
         }
-        else if (Core.mode == CoreMode.drawStart)
+        else if (Core.mode == CoreMode.drawStart) //Draw mode
         {
-            if (Core.group[1] == GMode.G00) //Rapid Move
+            if (running == false) //The draw has not started
             {
-                draw = false; SetCoords();
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                t += Time.deltaTime / d; //Time Control
+                if (Core.group[1] == GMode.G00 || Core.group[1] == GMode.G01)
+                {
+                    SetCoords(); //Set the linear coords
+                }
+                else
+                {
+                    SetCoords(true); //Set the linear and arc coords
+                }
+                running = true; //Set the simulator state
             }
-            else if (Core.group[1] == GMode.G01) //Linear Move
+            else //The draw has started running
             {
-                draw = true; SetCoords(); 
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
+                if (Core.group[1] == GMode.G00) //Rapid Move Draw
+                {
+                    draw = false; //No trail
+                    trail.emitting = draw; //Determines whether a trail would be drawn or not
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    t += Time.deltaTime / d; //Time Control
+                }
+                else if (Core.group[1] == GMode.G01) //Linear Move Draw
+                {
+                    draw = true; //Draw a trail
+                    trail.emitting = draw; //Determines whether a trail would be drawn or not
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
+                }
             }
-            else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
+
+            /* Arc Drawing Code
+            if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
             {
                 draw = true; SetCoords(true);
                 float drawAngle = Mathf.LerpAngle(0, angle, degree/angle);
@@ -80,7 +103,8 @@ public class ArmControl : MonoBehaviour
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                 t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
             }
-
+            */
+            
             //Timing Control
             if (t >= 1.0f)
             {
@@ -103,22 +127,14 @@ public class ArmControl : MonoBehaviour
 
     public void SetCoords(bool drawArcs = false)
     {
-        if(running == true) 
-        { 
-            ErrorHandler.Log("Already running!");  
-            return; 
-        }
-        ResetCoords();
+        ResetCoords(); //Clear the coordinates holder
 
         SetLinearCoords(); //Set the linear coordinates
-
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates if that setting is on
         }
-
-        trail.emitting = draw; //Determines whether a trail would be drawn or not
-        running = true; //Sets the run state of the machine to true
+        ErrorHandler.Log("Set Coordinates");
     }
 
     /// <summary>Sets the coordinates required to draw linear lines</summary>

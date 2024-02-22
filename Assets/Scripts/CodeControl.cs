@@ -14,13 +14,14 @@ public class CodeControl : MonoBehaviour
             if (lineIndex >= AppManager.fileBuffer.Count - 1)
             {
                 Core.mode = CoreMode.EOF; //End Of File
+                ErrorHandler.Log("End Of File");
                 return; //Don't do anything
             }
             else //Move to the next line of the file
             {
                 ExecuteCode(AppManager.fileBuffer[lineIndex]);
                 lineIndex++;
-                //ErrorHandler.Log("Line: " + (lineIndex + 1));
+                ErrorHandler.Log("Line: " + (lineIndex + 1));
             }
         }
     }
