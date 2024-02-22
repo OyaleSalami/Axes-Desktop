@@ -3,17 +3,22 @@ namespace AxesCore
 {
     public class CommandDefinitions
     {
-        public static Dictionary<string, GMode> gModes = new Dictionary<string, GMode>();
-        public static Dictionary<string, MMode> mModes = new Dictionary<string, MMode>();
-        public static Dictionary<string, Tool> tools = new Dictionary<string, Tool>();
+        public static Dictionary<string, GMode> gModes;
+        public static Dictionary<string, MMode> mModes;
+        public static Dictionary<string, Tool> tools;
 
         public delegate void OperationHandler();
 
         /// <summary>A dictionary to store all function handlers matching them to a key(type)</summary>
         public static Dictionary<GMode, OperationHandler> opHandlers;
 
+        /// <summary>Initializes the dictionaries that hold the commands</summary>
         public static void Init()
         {
+            gModes = new Dictionary<string, GMode>();
+            mModes = new Dictionary<string, MMode>();
+            tools = new Dictionary<string, Tool>();
+
             //Initialize G-Modes
             gModes.Add("G0", GMode.G00); //Rapid Move
             gModes.Add("G00", GMode.G00); //Rapid Move
@@ -98,6 +103,7 @@ namespace AxesCore
             InitializeHandlers();
         }
 
+        /// <summary>Initializes the Function handlers matching them to their respective keys</summary>
         public static void InitializeHandlers()
         {
             opHandlers = new Dictionary<GMode, OperationHandler>();
@@ -126,34 +132,67 @@ namespace AxesCore
             opHandlers.Add(GMode.G91, CoreEngine.PositionModeIncremental);
             opHandlers.Add(GMode.G901, CoreEngine.ArcModeAbsolute);
             opHandlers.Add(GMode.G911, CoreEngine.ArcModeIncremental);
+
+            //Group 2 Modal Operators
             opHandlers.Add(GMode.G17, CoreEngine.XYPlaneSelect);
             opHandlers.Add(GMode.G18, CoreEngine.ZXPlaneSelect);
             opHandlers.Add(GMode.G19, CoreEngine.YZPlaneSelect);
+
+            //Group 6 Modal Operators
             opHandlers.Add(GMode.G20, CoreEngine.SetInch);
             opHandlers.Add(GMode.G21, CoreEngine.SetMilli);
+
+            //Group 5 Modal Operators
             opHandlers.Add(GMode.G94, CoreEngine.SetFeedRate);
 
+            //Group 7 Modal Operators
+            opHandlers.Add(GMode.G40, CoreEngine.CancelCutterCompensation);
+            opHandlers.Add(GMode.G41, CoreEngine.SetCutterCompensationLeft);
+            opHandlers.Add(GMode.G42, CoreEngine.SetCutterCompensationRight);
 
+            //Group 8 Modal Operators
+            opHandlers.Add(GMode.G49, CoreEngine.ToolLengthOffsetCancel);
+            opHandlers.Add(GMode.G43, CoreEngine.SetToolLengthOffsetPositive);
+            opHandlers.Add(GMode.G44, CoreEngine.SetToolLengthOffsetNegative);
+
+            //Group 16 Modal Operators
+            opHandlers.Add(GMode.G73, CoreEngine.HighSpeedPeck);
+            opHandlers.Add(GMode.G74, CoreEngine.LHTapping);
+            opHandlers.Add(GMode.G76, CoreEngine.FineBoring);
+            opHandlers.Add(GMode.G80, CoreEngine.CancelCannedCycle);
         }
     }
 
+    /// <summary>Coordinates</summary>
     public class Coord
     {
-        public float x, y, z, a, b, c, d, f, p, r, s, t, i, j, k;
+        public float x, y, z,  a, b, c,  i, j, k,  d, f, h,  p, q, l,  r, s, t;
 
+        /// <summary>Sets all the coordinate values to zero</summary>
         public Coord()
         {
             x = 0; y = 0; z = 0;
             a = 0; b = 0; c = 0;
-            d = 0; f = 0; p = 0; 
-            r = 0; s = 0; t = 0;
             i = 0; j = 0; k = 0;
+            d = 0; f = 0; h = 0; 
+            p = 0; q = 0; l = 0;
+            r = 0; s = 0; t = 0;
+        }
+
+        public bool isZero()
+        {
+            if(x == 0 && y == 0 && z == 0 && a == 0 && b == 0 && c == 0 && i == 0 && j ==  0 && k == 0 && r == 0)
+            {
+                return true;
+            }
+            return false;
         }
     }
 
+    /// <summary>Preparatory Codes (GCodes)</summary>
     public enum GMode : int
     {
-        G00, G01, G02, G03, G04, G05, G06, G07, G08, G09, G10, G11,
+        n, G00, G01, G02, G03, G04, G05, G06, G07, G08, G09, G10, G11,
         G12, G13, G14, G15, G16, G17, G18, G19, G20, G21, G22, G23,
         G24, G25, G26, G27, G28, G29, G30, G31, G32, G33, G34, G35,
         G36, G37, G38, G39, G40, G41, G42, G43, G44, G45, G46, G47,
@@ -174,6 +213,7 @@ namespace AxesCore
 
     }
 
+    /// <summary>Unit Per Measure</summary>
     public enum UPM : int
     {
         inches, millimeters, degrees
@@ -184,23 +224,35 @@ namespace AxesCore
         absolute, incremental, arcAbsolute, arcIncremental
     }
 
+    /// <summary>Describes which plane is selected</summary>
     public enum PlaneMode : int
     {
         XY, ZX, YZ
     }
 
+    /// <summary>Describes what should be done with the coordinates passed</summary>
     public enum CoordMode : int
     {
-        draw, dwell, fixtureOffset, addFixtureOffset
+        nil, draw, dwell, fixtureOffset, addFixtureOffset, toolDiameter,
+        cutterCompensation, toolLengthOffsetNegative, toolLengthOffsetPositive,
+        highSpeedPeck, lhTapping, fineBoring, scale
     }
 
+    /// <summary>Describes the state(process) the simulator is in</summary>
     public enum CoreMode : int
     {
-        start, waiting, running, done, coord, drawStart, drawEnd, dwellStart, dwellEnd, EOF
+        normal, start, waiting, running, drawStart, drawEnd, dwellStart, dwellEnd, EOF,
+        startPeck, cannedCycleDone
     }
 
+    /// <summary>Shows whether a file has been loaded or not</summary>
     public enum LoadMode : int
     {
         loaded, unloaded
+    }
+
+    public enum CutterCompensationMode : int
+    {
+        none, left, right
     }
 }

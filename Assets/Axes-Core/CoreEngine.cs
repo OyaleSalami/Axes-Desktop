@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace AxesCore
 {
@@ -6,13 +7,14 @@ namespace AxesCore
     {
         public static void SetMMode(MMode mode)
         {
-
+            ErrorHandler.Log("MCode: " + mode);
         }
 
         #region Tool Functions
         public static void SetTool(Tool tool)
         {
             Core.tool = tool;
+            ErrorHandler.Log("Tool: " + tool);
         }
 
         public static void SetToolDiameter(float value)
@@ -129,6 +131,7 @@ namespace AxesCore
         public static void ResetCoord()
         {
             Core.coord = new();
+            Core.coordMode = CoordMode.nil;
         }
 
         public static void SetCoordMode(CoordMode mode)
@@ -151,15 +154,15 @@ namespace AxesCore
         }
 
         /// <summary>Changes the scale of the simulator</summary>
-        public static void SetScale(float _scale)
+        public static void SetScale()
         {
-            Core.scale = _scale;
+            Core.scale = new Vector3(Core.coord.x, Core.coord.z , Core.coord.y);
         }
 
         /// <summary>Resets the scale of the simulator</summary>
         public static void Cancelscale()
         {
-            Core.scale = 1;
+            Core.scale = new(1, 1, 1);
         }
 
         #region Group 12 Functions
@@ -205,33 +208,108 @@ namespace AxesCore
         }
         #endregion
 
+        #region Group 7 Functions
+        public static void CancelCutterCompensation()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.none;
+        }
+
+        public static void SetCutterCompensationLeft()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.left;
+            Core.coordMode = CoordMode.cutterCompensation;
+        }
+
+        public static void SetCutterCompensationRight()
+        {
+            Core.cutterCompensationMode = CutterCompensationMode.right;
+            Core.coordMode = CoordMode.cutterCompensation;
+        }
+        #endregion
+
+        #region Group 8 Functions
+        public static void ToolLengthOffsetCancel()
+        {
+            Core.toolLengthOffset = 0f;
+        }
+
+        public static void SetToolLengthOffsetNegative()
+        {
+            Core.coordMode = CoordMode.toolLengthOffsetNegative;
+        }
+
+        public static void SetToolLengthOffsetPositive()
+        {
+            Core.coordMode = CoordMode.toolLengthOffsetPositive;
+        }
+        #endregion
+
+        #region Group 16 Functions
+        public static void HighSpeedPeck()
+        {
+            Core.coordMode = CoordMode.highSpeedPeck;
+        }
+
+        public static void LHTapping()
+        {
+            Core.coordMode = CoordMode.lhTapping;
+        }
+
+        public static void FineBoring()
+        {
+            Core.coordMode = CoordMode.fineBoring;
+        }
+
+        public static void CancelCannedCycle()
+        {
+            Core.cannedCycle = false;
+        }
+        #endregion
+
         public static void HandleCoordinates()
         {
+            ErrorHandler.Log("Handling Coordinates");
             try
             {
                 if(Core.coord.f != 0)
                 {
                     SetFeedRate(Core.coord.f);
                 }
+                if(Core.coord.h != 0)
+                {
+                    SetToolHeight(Core.coord.h);
+                }
 
-                //Handle Fixture Offset
-                if (Core.coordMode == CoordMode.fixtureOffset)
+                //Handle Different Use Cases Of Parameters
+                ErrorHandler.Log("Passed Coord Mode: " + Core.coordMode.ToString());
+                switch (Core.coordMode)
                 {
-                    SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
+                    case CoordMode.fixtureOffset:
+                        SetFixtureOffset(Int32.Parse(Core.coord.p.ToString()));
+                        break;
+                    case CoordMode.addFixtureOffset:
+                        SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
+                        break;
+                    case CoordMode.dwell:
+                        ErrorHandler.Log("Coord Mode: dwell");
+                        SetDwellTime(Core.coord.p);
+                        Core.mode = CoreMode.dwellStart;
+                        break;
+                    case CoordMode.highSpeedPeck:
+                        Core.mode = CoreMode.startPeck;
+                        break;
+                    case CoordMode.scale:
+                        ErrorHandler.Log("Coord Mode: scale");
+                        SetScale();
+                        break;
+                    case CoordMode.draw:
+                        Core.mode = CoreMode.drawStart;
+                        break;
+                    default:
+                        Core.mode = Core.coord.isZero() ? CoreMode.normal : CoreMode.drawStart;
+                        break;
                 }
-                else if (Core.coordMode == CoordMode.addFixtureOffset)
-                {
-                    SetFixtureOffset(Int32.Parse((Core.coord.p + 6).ToString()));
-                }
-                else if (Core.coordMode == CoordMode.dwell)
-                {
-                    SetDwellTime(Core.coord.p);
-                    Core.mode = CoreMode.dwellStart;
-                }
-                else
-                {
-                    Core.mode = CoreMode.drawStart;
-                }
+                ErrorHandler.Log("Core Mode: " + Core.mode);
             }
             catch (Exception e)
             {
@@ -240,37 +318,59 @@ namespace AxesCore
         }
     }
 
+    /// <summary>Holds the importatnt parameters needed to run the simulator</summary>
     public class Core
     {
+        /// <summary>The Unit the simulator is working with</summary>
         public static UPM upm;
-        public static PositionMode arcMode;
-        public static PositionMode positionMode;
-        public static PlaneMode planeMode;
+
+        /// <summary>The current selected tool</summary>
         public static Tool tool;
-        public static float toolDiameter = 1.0f;
-        public static float toolHeight = 1.0f;
+
+        /// <summary>The plane being used</summary>
+        public static PlaneMode planeMode;
+
+        /// <summary>Arc mode: absolute or incremental</summary>
+        public static PositionMode arcMode;
+
+        /// <summary>Position mode: absolute or incremental</summary>
+        public static PositionMode positionMode;
+
+        public static CutterCompensationMode cutterCompensationMode;
+
+        /// <summary>The sclae that should be applied to the different axes</summary>
+        public static Vector3 scale;
+
         public static int fixtureOffset = 1;
-        public static float scale = 1;
-        public static float feedRate = 15;
         public static float dwellTime = 0;
+        public static float feedRate = 15;
+        public static float spindleSpeed = 0;
+        public static float toolHeight = 1.0f;
+        public static float toolDiameter = 1.0f;
+        public static float toolLengthOffset = 0f;
+
         public static bool exactStop = false;
-        public static float spindleSpeed;
+        public static bool cannedCycle = false;
 
         public static CoreMode mode;
         public static Coord coord;
+
+        /// <summary>Determines what the coordinates should be used for</summary>
         public static CoordMode coordMode;
         public static GMode[] group;
 
+        /// <summary>Sets/Resets the parameters for the Core</summary>
         public static void Init()
         {
-            CoreEngine.ResetCoord();
-            mode = CoreMode.waiting;
+            coord = new Coord();
+            mode = CoreMode.normal; //The default state of the simulator
             upm = UPM.millimeters;
             planeMode = PlaneMode.XY;
             positionMode = PositionMode.absolute;
             arcMode = PositionMode.arcAbsolute;
-            group = new GMode[16]; //Defines Group 0 to Group 16
-            scale = 1f;
+
+            group = new GMode[16]; //Create the Group 0 to Group 16
+            scale = new(1f, 1f, 1f); //Set the default scale
         }
     }
 }

@@ -9,34 +9,35 @@ public class CodeControl : MonoBehaviour
 
     public void Update()
     {
-        if (Core.mode == CoreMode.done && AppManager.loadMode == LoadMode.loaded)
+        if (Core.mode == CoreMode.normal && AppManager.loadMode == LoadMode.loaded)
         {
             if (lineIndex >= AppManager.fileBuffer.Count - 1)
             {
                 Core.mode = CoreMode.EOF; //End Of File
+                ErrorHandler.Log("End Of File");
                 return; //Don't do anything
             }
             else //Move to the next line of the file
             {
+                ExecuteCode(AppManager.fileBuffer[lineIndex]);
                 lineIndex++;
-                ErrorHandler.Log("Increased Index: " + lineIndex);
-                ExecuteFile();
+                ErrorHandler.Log("Line: " + (lineIndex + 1));
             }
         }
-    }
-
-    public void ExecuteFile()
-    {
-        Core.mode = CoreMode.start;
-        ExecuteCode(AppManager.fileBuffer[lineIndex]);
     }
 
     /// <summary>Executes a single line of NC code </summary>
     public void ExecuteCode(string line)
     {
         Block block = new Block(line);
-        
-        //Interprets the block and sets the correct parameters
-        Parser.InterpretTokens(block.Tokenize()); 
+        if (block.isNotValid == true)
+        {
+            Core.mode = CoreMode.normal;
+        }
+        else
+        {
+            //Interprets the block and sets the correct parameters for the Core
+            Parser.InterpretTokens(block.Tokenize());
+        }
     }
 }

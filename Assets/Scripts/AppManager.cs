@@ -1,4 +1,5 @@
 using AxesCore;
+using SFB;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,31 +11,34 @@ public class AppManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] Text codeLine;
     [SerializeField] Text titleText;
-    [SerializeField] Text dataLog;
     [SerializeField] Text machineVariables;
     [SerializeField] GameObject displayPanel;
+    [SerializeField] GameObject grid;
 
     [Header("NC Code File Path")]
-    int fileIndex;
+    private System.Windows.Forms.OpenFileDialog fileDialog;
     public static List<string> fileBuffer;
     public CodeControl codeController;
-
-    public static LoadMode loadMode;
+    public static LoadMode loadMode = LoadMode.unloaded;
 
     void Start()
     {
         Core.Init();
         ErrorHandler.Init();
         CommandDefinitions.Init();
-        fileBuffer = new List<string>();
+        fileBuffer = new List<string>(); //Create a file buffer to store the loaded file 
         UpdateUI();
     }
 
     /// <summary>Brings up the context menu to select an NC file</summary>
     public void SelectFile()
     {
-        string ncType = NativeFilePicker.ConvertExtensionToFileType("nc"); //Define the extension
-        NativeFilePicker.PickFile(LoadFile, ncType); //Bring up the context menu
+        // Create filter
+        var extensions = new[]{ new ExtensionFilter("NC Files", "nc" ) };
+
+        //Open the context menu
+        var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
+        LoadFile(path[0]);
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>
@@ -49,7 +53,6 @@ public class AppManager : MonoBehaviour
         {
             try //Read the lines of the file
             {
-                fileIndex = 0;
                 fileBuffer.AddRange(File.ReadAllLines(path));
             }
             catch (Exception e) //An error occured
@@ -57,19 +60,18 @@ public class AppManager : MonoBehaviour
                 ErrorHandler.Error("Error Reading file: " + e);
             }
 
-            loadMode = LoadMode.loaded;
             string filename = Path.GetFileName(path); //Get the name of the file
-            SetTitleText(filename); //Set the tile of the window to the name of the file
-            codeController.ExecuteFile(); //Start executing the file
+            ErrorHandler.Log("[File]: " + filename);
+            SetTitleText("Axes - " + filename); //Set the tile of the window to the name of the file
+            loadMode = LoadMode.loaded; //Set the file loaded mode
         }
     }
 
     void UnLoadFile()
     {
-        SetTitleText("Axes");
-        fileBuffer = new List<string>();
-        fileIndex = 0;
-        loadMode = LoadMode.unloaded;
+        SetTitleText("Axes"); //Change back the title of the window
+        fileBuffer = new List<string>(); //Empty the file buffer
+        loadMode = LoadMode.unloaded; //Set the file mode to unloaded
     }
 
     /// <summary>Sets the title for the window </summary>
@@ -78,24 +80,10 @@ public class AppManager : MonoBehaviour
     /// <summary>Hides the display panel</summary>
     public void MinimizeDisplayPanel() => displayPanel.SetActive(!displayPanel.activeInHierarchy);
 
-    /// <summary>
-    /// Updates the UI for the 
-    /// * Machine Variables
-    /// * Debug Handler
-    /// </summary>
+    /// <summary> Updates the UI for the Core Variables and Debug Handler </summary>
     public void UpdateUI()
     {
-        dataLog.text = "";
-        foreach (var item in ErrorHandler.logs)
-        {
-            dataLog.text += "\n" + item;
-        }
-
-        foreach (var item in ErrorHandler.errors)
-        {
-            dataLog.text += "\n" + "<color=red>" + item + "</color>";
-        }
-
+        //Update the text for the Core variables
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
                                 "Feed Rate: " + Core.feedRate + "\n" +
                                 "Dwell Time: " + Core.dwellTime + "\n" +
@@ -105,8 +93,21 @@ public class AppManager : MonoBehaviour
                                 "Exact Stop: " + Core.exactStop + "\n" +
                                 "Plane Select: " + Core.planeMode + "\n" +
                                 "Core Mode: " + Core.mode + "\n" +
+                                "Group 1 Mode: " + Core.group[1] + "\n" +
                                 "UPM: " + Core.upm;
 
-        Invoke(nameof(UpdateUI), 1f); //Update UI every second not every frame   
+        Invoke(nameof(UpdateUI), 1f); //Update UI every second not every frame (Sort of a delayed recursive loop)   
     }
-}
+
+    public void OpenLog()
+    {
+        Application.OpenURL(ErrorHandler.filePath); //Try to open the log file in notepad or something
+    }
+
+    public void ToggleGrid()
+    {
+        grid.SetActive(!grid.activeSelf);
+    }
+
+    public void Quit() => UnityEngine.Application.Quit();
+};
