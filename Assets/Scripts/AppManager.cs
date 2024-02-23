@@ -16,7 +16,6 @@ public class AppManager : MonoBehaviour
     [SerializeField] GameObject grid;
 
     [Header("NC Code File Path")]
-    private System.Windows.Forms.OpenFileDialog fileDialog;
     public static List<string> fileBuffer;
     public CodeControl codeController;
     public static LoadMode loadMode = LoadMode.unloaded;
@@ -26,7 +25,7 @@ public class AppManager : MonoBehaviour
         Core.Init();
         ErrorHandler.Init();
         CommandDefinitions.Init();
-        fileBuffer = new List<string>(); //Create a file buffer to store the loaded file 
+        UnLoadFile();
         UpdateUI();
     }
 
@@ -34,7 +33,7 @@ public class AppManager : MonoBehaviour
     public void SelectFile()
     {
         // Create filter
-        var extensions = new[]{ new ExtensionFilter("NC Files", "nc" ) };
+        var extensions = new[] { new ExtensionFilter("NC Files", "nc") };
 
         //Open the context menu
         var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
@@ -61,8 +60,8 @@ public class AppManager : MonoBehaviour
             }
 
             string filename = Path.GetFileName(path); //Get the name of the file
-            ErrorHandler.Log("[File]: " + filename);
             SetTitleText("Axes - " + filename); //Set the tile of the window to the name of the file
+            ErrorHandler.Log("[File]: " + filename + "  Loaded");
             loadMode = LoadMode.loaded; //Set the file loaded mode
         }
     }
@@ -83,6 +82,8 @@ public class AppManager : MonoBehaviour
     /// <summary> Updates the UI for the Core Variables and Debug Handler </summary>
     public void UpdateUI()
     {
+        codeLine.text = ErrorHandler.current;
+
         //Update the text for the Core variables
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
                                 "Feed Rate: " + Core.feedRate + "\n" +

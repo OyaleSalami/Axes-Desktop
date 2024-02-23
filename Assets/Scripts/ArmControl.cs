@@ -4,7 +4,9 @@ using UnityEngine;
 public class ArmControl : MonoBehaviour
 {
     [Header("Miscellenous")]
+    [SerializeField] GameObject linePrefab;
     [SerializeField] GameObject drawHolder;
+    LineRenderer currentLine;
 
     [SerializeField] bool running;
 
@@ -59,13 +61,20 @@ public class ArmControl : MonoBehaviour
         {
             if (running == false) //The draw has not started
             {
-                if (Core.group[1] == GMode.G00 || Core.group[1] == GMode.G01)
+                switch (Core.group[1])
                 {
-                    SetCoords(); //Set the linear coords
-                }
-                else
-                {
-                    SetCoords(true); //Set the linear and arc coords
+                    case GMode.G00:
+                        SetCoords(); //Set the linear coords only
+                        break;
+                    case GMode.G01:
+                        SetCoords(); //Set the linear coords only
+                        //Create line renderer
+                        //currentLine = Instantiate(linePrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        //currentLine.SetPosition(0, startCoord); ///Set its first position
+                        break;
+                    default:
+                        SetCoords(true); //Set the linear and arc coords
+                        break;
                 }
                 running = true; //Set the simulator state
             }
@@ -83,6 +92,7 @@ public class ArmControl : MonoBehaviour
                     draw = true; //Draw a trail
                     trail.emitting = draw; //Determines whether a trail would be drawn or not
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    //currentLine.SetPosition(1, effector.transform.position);
                     t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
                 }
             }

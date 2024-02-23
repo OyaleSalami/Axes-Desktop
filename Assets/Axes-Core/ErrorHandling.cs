@@ -17,6 +17,7 @@ namespace AxesCore
         /// <summary>Name of the log file</summary>
         static string filename;
         public static string filePath;
+        internal static string current;
 
         /// <summary>Create new logs to store the error and debug commands!</summary>
         public static void Init()
@@ -54,6 +55,7 @@ namespace AxesCore
                     fs.Close(); fs.Dispose();
                 }
             }
+            current = log;
         }
 
         /// <summary>Adds an error statement to the logs</summary>
