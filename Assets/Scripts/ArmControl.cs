@@ -34,8 +34,8 @@ public class ArmControl : MonoBehaviour
     float d = 0f;
 
     /// <summary> How many degrees the draw has gone </summary>
-    float degree = 0; 
-    
+    float degree = 0;
+
     /// <summary>The timer for Lerping Linear Draw Commands</summary>
     float t = 0f;
 
@@ -139,7 +139,7 @@ public class ArmControl : MonoBehaviour
             if (t >= 1.0f)
             {
                 //Approximate the line to the correct ending
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1); 
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
                 t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Linear Drawing!");
             }
@@ -184,7 +184,23 @@ public class ArmControl : MonoBehaviour
         ErrorHandler.Log("Setting the Linear Coords");
         if (Core.positionMode == PositionMode.absolute)
         {
-            endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
+            foreach(var s in Core.coordList)
+            {
+                ErrorHandler.Log("Coordinate: " + s);
+            }
+
+            //endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
+            endCoord = new()
+            {
+                //Set X Coordinate
+                x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x,
+
+                //Set Y Coordinate
+                y = Core.coordList.Contains("y") ? Core.coord.z : startCoord.y,
+
+                //Set Z Coordinate
+                z = Core.coordList.Contains("z") ? Core.coord.y : startCoord.z
+            };
         }
         else //PositionMode.incremental
         {
