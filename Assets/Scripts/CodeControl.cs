@@ -19,9 +19,9 @@ public class CodeControl : MonoBehaviour
             }
             else //Move to the next line of the file
             {
+                ErrorHandler.Log("Line: " + (lineIndex + 1));
                 ExecuteCode(AppManager.fileBuffer[lineIndex]);
                 lineIndex++;
-                ErrorHandler.Log("Line: " + (lineIndex + 1));
             }
         }
     }

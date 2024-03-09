@@ -90,6 +90,7 @@ public class Settings : MonoBehaviour
         }
 
         int feedrate = int.Parse(feedrateInput.text);
+        Core.feedRate = feedrate;
         PlayerPrefs.SetInt("feedrate", feedrate);
         ErrorHandler.Log("Set Feedrate: " + feedrate);
     }

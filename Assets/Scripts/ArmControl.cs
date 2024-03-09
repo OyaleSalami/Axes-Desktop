@@ -68,7 +68,7 @@ public class ArmControl : MonoBehaviour
         }
         else if (Core.mode == CoreMode.drawStart) //Draw mode
         {
-            if (running == false) //The draw has not started (So set the coordinates (only once))
+            if (running == false) //The draw has not started (So set the coordinates (only once per draw))
             {
                 switch (Core.group[1])
                 {
@@ -108,13 +108,13 @@ public class ArmControl : MonoBehaviour
                 if (Core.group[1] == GMode.G00) //Rapid Move Draw
                 {
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                    t += (mVelocity / (60 * d)) * Time.deltaTime / d; //Time Control
+                    t += (mVelocity / (60 * d)) * Time.deltaTime * mSpeed; //Time Control (mVelocity is the default movement velocity)
                 }
                 else if (Core.group[1] == GMode.G01) //Linear Move Draw
                 {
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                     currentLine.SetPosition(1, effector.transform.position);
-                    t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
                 {
@@ -138,6 +138,8 @@ public class ArmControl : MonoBehaviour
             //Timing Control
             if (t >= 1.0f)
             {
+                //Approximate the line to the correct ending
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1); 
                 t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Linear Drawing!");
             }
@@ -166,13 +168,14 @@ public class ArmControl : MonoBehaviour
     {
         LoadMovementParameters(); //Load the parameters as specified in the settings
         ResetCoords(); //Clear the coordinates holder
-
         SetLinearCoords(); //Set the linear coordinates
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates if that setting is on
         }
-        ErrorHandler.Log("Set Coordinates");
+        ErrorHandler.Log("Set Coordinates =>");
+        ErrorHandler.Log("Starting Point: " + startCoord);
+        ErrorHandler.Log("End Point: " + endCoord);
     }
 
     /// <summary>Sets the coordinates required to draw linear lines</summary>
@@ -241,8 +244,8 @@ public class ArmControl : MonoBehaviour
     {
         d = 0; degree = 0;
         angle = 0; radius = 0;
-        endCoord = new();
-        centerPoint = new();
+        endCoord = Vector3.zero;
+        centerPoint = Vector3.zero;
         startCoord = end.transform.position; //The positon should be gotten from the tip
     }
 

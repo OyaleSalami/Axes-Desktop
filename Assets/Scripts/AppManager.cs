@@ -33,13 +33,16 @@ public class AppManager : MonoBehaviour
     public void SelectFile()
     {
         // Create filter
-        var extensions = new[] { new ExtensionFilter("NC Files", "nc") };
-
+        var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
+        
+        //Reset the buffer to make sure there is no left over file when restarting
+        UnLoadFile();
 
         //Open the context menu
-        var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
+        var path = StandaloneFileBrowser.OpenFilePanel("Select GCode File", "", extensions, false);
         if (path.Length > 0)
         {
+            //If multiple paths were selected, use the first one
             LoadFile(path[0]);
         }
     }
@@ -47,7 +50,7 @@ public class AppManager : MonoBehaviour
     /// <summary>Attempts to load the selected file into a buffer</summary>
     void LoadFile(string path)
     {
-        if (File.Exists(path) != true) //No file was picked
+        if (File.Exists(path) != true) //No valid file path was picked
         {
             ErrorHandler.Error("File does not exist!");
             return;
