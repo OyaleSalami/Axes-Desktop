@@ -35,9 +35,13 @@ public class AppManager : MonoBehaviour
         // Create filter
         var extensions = new[] { new ExtensionFilter("NC Files", "nc") };
 
+
         //Open the context menu
         var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
-        LoadFile(path[0]);
+        if (path.Length > 0)
+        {
+            LoadFile(path[0]);
+        }
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>

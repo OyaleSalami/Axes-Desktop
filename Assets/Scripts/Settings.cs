@@ -1,45 +1,97 @@
+using AxesCore;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Settings : MonoBehaviour
 {
-    [Header("Variables")]
-    [SerializeField] public static float speed;
-    [SerializeField] public static float feedrate;
-    [SerializeField] public static float maxVelocity;
-
     [Header("UI Elements")]
     [SerializeField] InputField speedInput;
     [SerializeField] InputField feedrateInput;
     [SerializeField] InputField maxVelocityInput;
 
-    // Start is called before the first frame update
     void Start()
     {
-        Load(); UpdateUI();
+        LoadDefaults(); UpdateUI();
     }
 
-    // Update is called once per frame
-    void Update()
+    /// <summary>Set the default values of the settings</summary>
+    void LoadDefaults()
     {
-
-    }
-
-    public void Load()
-    {
-        speed = PlayerPrefs.GetInt("speed_settings", 1);
-        feedrate = PlayerPrefs.GetFloat("feedrate_settings", 15);
-        maxVelocity = PlayerPrefs.GetFloat("maxvelocity_settings", 1000);
+        if (PlayerPrefs.HasKey("speed") == false)
+        {
+            PlayerPrefs.SetInt("speed", 1);
+        }
+        if(PlayerPrefs.HasKey("velocity") == false)
+        {
+            PlayerPrefs.SetInt("velocity", 1000);
+        }
+        if(PlayerPrefs.HasKey("feedrate") == false)
+        {
+            PlayerPrefs.SetInt("feedrate", 15);
+        }
     }
 
     void UpdateUI()
     {
-        speedInput.text = speed.ToString();
-        feedrateInput.text = feedrate.ToString();
+        int speed = PlayerPrefs.GetInt("speed");
+        int feedrate = PlayerPrefs.GetInt("feedrate");
+        int velocity = PlayerPrefs.GetInt("velocity");
+
+        speedInput.text = PlayerPrefs.GetInt("speed", speed).ToString();
+        feedrateInput.text = PlayerPrefs.GetFloat("feedrate", feedrate).ToString();
+        maxVelocityInput.text = PlayerPrefs.GetFloat("velocity", velocity).ToString();
     }
 
-    public void SetValue(string key, int value)
+    public void SetSpeed()
     {
-        PlayerPrefs.SetFloat(key, value);
+        if (Int32.Parse(speedInput.text) >= 3)
+        {
+            speedInput.text = "3";
+        }
+
+        if (Int32.Parse(speedInput.text) <= 0)
+        {
+            speedInput.text = "1";
+        }
+
+        int speed = Int32.Parse(speedInput.text);
+        PlayerPrefs.SetInt("speed", speed);
+        ErrorHandler.Log("Set Simulator Speed: " + speed);
     }
+
+    public void SetVelocity()
+    {
+        if (int.Parse(maxVelocityInput.text) >= 2000)
+        {
+            maxVelocityInput.text = "2000";
+        }
+
+        if (int.Parse(maxVelocityInput.text) <= 0)
+        {
+            maxVelocityInput.text = "1000";
+        }
+
+        int velocity = Int32.Parse(maxVelocityInput.text);
+        PlayerPrefs.SetInt("velocity", velocity);
+        ErrorHandler.Log("Set Velocity: " + velocity);
+    }
+
+    public void SetFeedrate()
+    {
+        if (int.Parse(feedrateInput.text) >= 1000)
+        {
+            feedrateInput.text = "1000";
+        }
+
+        if (int.Parse(feedrateInput.text) <= 0)
+        {
+            feedrateInput.text = "15";
+        }
+
+        int feedrate = int.Parse(feedrateInput.text);
+        PlayerPrefs.SetInt("feedrate", feedrate);
+        ErrorHandler.Log("Set Feedrate: " + feedrate);
+    }
+
 }

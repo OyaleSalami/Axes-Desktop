@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -8,12 +7,9 @@ namespace AxesCore
     /// <summary>Handles error and log statements</summary>
     public class ErrorHandler
     {
-        /// <summary>A list of all the logs collected during the program running</summary>
-        public static List<string> logs;
-
         /// <summary>Where the log files would be stored</summary>
         static string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Axes Core/";
-        
+
         /// <summary>Name of the log file</summary>
         static string filename;
         public static string filePath;
@@ -22,7 +18,6 @@ namespace AxesCore
         /// <summary>Create new logs to store the error and debug commands!</summary>
         public static void Init()
         {
-            logs = new();
             //Create Log Folder if it doesn't exist
             Directory.CreateDirectory(path);
 
@@ -43,14 +38,15 @@ namespace AxesCore
                 {
                     if (error != true)
                     {
-                        Debug.Log(log); logs.Add("[Log]: " + log);
+                        Debug.Log(log);
                         sw.WriteLine("[Log]: " + log);
                     }
                     else
                     {
-                        Debug.LogError(error); logs.Add("[Error]: " + error);
+                        Debug.LogError(error);
                         sw.WriteLine("[Error]: " + error);
                     }
+
                     sw.Close(); sw.Dispose();
                     fs.Close(); fs.Dispose();
                 }
@@ -63,5 +59,6 @@ namespace AxesCore
         {
             Log(error, true);
         }
+
     }
 }
