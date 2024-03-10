@@ -169,11 +169,12 @@ public class ArmControl : MonoBehaviour
         LoadMovementParameters(); //Load the parameters as specified in the settings
         ResetCoords(); //Clear the coordinates holder
         SetLinearCoords(); //Set the linear coordinates
+
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates if that setting is on
         }
-        ErrorHandler.Log("Set Coordinates =>");
+
         ErrorHandler.Log("Starting Point: " + startCoord);
         ErrorHandler.Log("End Point: " + endCoord);
     }
@@ -189,18 +190,14 @@ public class ArmControl : MonoBehaviour
                 ErrorHandler.Log("Coordinate: " + s);
             }
 
+            endCoord = new();
+
+            endCoord.x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x;
+            endCoord.y = Core.coordList.Contains("z") ? Core.coord.z : startCoord.y;
+            endCoord.z = Core.coordList.Contains("y") ? Core.coord.y : startCoord.z;
+
+            //endCoord = new Vector3(endCoord.x, endCoord.z, endCoord.y);
             //endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
-            endCoord = new()
-            {
-                //Set X Coordinate
-                x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x,
-
-                //Set Y Coordinate
-                y = Core.coordList.Contains("y") ? Core.coord.z : startCoord.y,
-
-                //Set Z Coordinate
-                z = Core.coordList.Contains("z") ? Core.coord.y : startCoord.z
-            };
         }
         else //PositionMode.incremental
         {
