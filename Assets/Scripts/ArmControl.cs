@@ -34,8 +34,8 @@ public class ArmControl : MonoBehaviour
     float d = 0f;
 
     /// <summary> How many degrees the draw has gone </summary>
-    float degree = 0; 
-    
+    float degree = 0;
+
     /// <summary>The timer for Lerping Linear Draw Commands</summary>
     float t = 0f;
 
@@ -139,7 +139,7 @@ public class ArmControl : MonoBehaviour
             if (t >= 1.0f)
             {
                 //Approximate the line to the correct ending
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1); 
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
                 t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Linear Drawing!");
             }
@@ -169,11 +169,12 @@ public class ArmControl : MonoBehaviour
         LoadMovementParameters(); //Load the parameters as specified in the settings
         ResetCoords(); //Clear the coordinates holder
         SetLinearCoords(); //Set the linear coordinates
+
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates if that setting is on
         }
-        ErrorHandler.Log("Set Coordinates =>");
+
         ErrorHandler.Log("Starting Point: " + startCoord);
         ErrorHandler.Log("End Point: " + endCoord);
     }
@@ -184,7 +185,19 @@ public class ArmControl : MonoBehaviour
         ErrorHandler.Log("Setting the Linear Coords");
         if (Core.positionMode == PositionMode.absolute)
         {
-            endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
+            foreach(var s in Core.coordList)
+            {
+                ErrorHandler.Log("Coordinate: " + s);
+            }
+
+            endCoord = new();
+
+            endCoord.x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x;
+            endCoord.y = Core.coordList.Contains("z") ? Core.coord.z : startCoord.y;
+            endCoord.z = Core.coordList.Contains("y") ? Core.coord.y : startCoord.z;
+
+            //endCoord = new Vector3(endCoord.x, endCoord.z, endCoord.y);
+            //endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
         }
         else //PositionMode.incremental
         {

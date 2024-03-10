@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AxesCore
@@ -132,6 +133,7 @@ namespace AxesCore
         {
             Core.coord = new();
             Core.coordMode = CoordMode.nil;
+            Core.coordList = new();
         }
 
         public static void SetCoordMode(CoordMode mode)
@@ -358,6 +360,8 @@ namespace AxesCore
         /// <summary>Determines what the coordinates should be used for</summary>
         public static CoordMode coordMode;
         public static GMode[] group;
+
+        public static List<string> coordList;
 
         /// <summary>Sets/Resets the parameters for the Core</summary>
         public static void Init()
