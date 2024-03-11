@@ -4,13 +4,16 @@ using UnityEngine;
 public class ArmControl : MonoBehaviour
 {
     [Header("Miscellenous")]
+    [SerializeField] GameObject arcPrefab;
+    [SerializeField] GameObject linePrefab;
     [SerializeField] GameObject drawHolder;
+    LineRenderer currentLine;
 
-    [SerializeField] bool running;
+    [SerializeField] bool running = false;
 
     [Header("Effector Parameters")]
-    [SerializeField] GameObject effector;
-    [SerializeField] TrailRenderer trail;
+    [SerializeField] GameObject effector; //The effector object
+    [SerializeField] GameObject end; //The tip of the effector
 
     [Header("Running Parameters")]
     /// <summary>The start coordinate for a draw command</summary>
@@ -31,94 +34,132 @@ public class ArmControl : MonoBehaviour
     /// <summary>Distance between the start and end points</summary>
     float d = 0f;
 
-    bool draw = false;
-    float timer = 0;
+    /// <summary> How many degrees the draw has gone </summary>
     float degree = 0;
-    float t = 0f; //For Timing LERP operations
 
-    void Start()
-    {
-        running = false;
-    }
+    /// <summary>The timer for Lerping Linear Draw Commands</summary>
+    float t = 0f;
 
+    /// <summary>The timer for Lerping tinier Arc Draw Commands</summary>
+    float m = 0f;
+
+    //Movement Parameters
+    float scale;
+    float mSpeed;
+    float mVelocity;
 
     void Update()
     {
-        if (Core.mode == CoreMode.dwellStart)
+        if (Core.mode == CoreMode.dwellStart) //Dwell Mode
         {
             Core.dwellTime -= Time.deltaTime;
 
             if (Core.dwellTime <= 0) //Timing Control
             {
-                Core.dwellTime = 0;
-                Core.mode = CoreMode.dwellEnd;
+                Core.dwellTime = 0; Core.mode = CoreMode.dwellEnd;
                 ErrorHandler.Log("Done with dwell");
             }
         }
         else if (Core.mode == CoreMode.drawStart) //Draw mode
         {
-            if (running == false) //The draw has not started
+            if (running == false) //The draw has not started (So set the coordinates (only once per draw))
             {
-                if (Core.group[1] == GMode.G00 || Core.group[1] == GMode.G01)
+                switch (Core.group[1])
                 {
-                    SetCoords(); //Set the linear coords
+                    case GMode.G00:
+                        SetCoords(); //Set the linear coords only
+                        break;
+
+                    case GMode.G01:
+                        SetCoords(); //Set the linear coords only
+                        //Create a line renderer //Set its first position
+                        currentLine = Instantiate(linePrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        currentLine.SetPosition(0, startCoord);
+                        break;
+
+                    case GMode.G02:
+                        SetCoords(true); //Set the linear and arc coords
+                        //Create a line renderer //Set its first position
+                        currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        currentLine.SetPosition(0, startCoord);
+                        break;
+
+                    case GMode.G03:
+                        SetCoords(true); //Set the linear and arc coords
+                        //Create a line renderer //Set its first position
+                        currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        currentLine.SetPosition(0, startCoord);
+                        break;
+
+                    default:
+                        SetCoords(true); //Set the linear and arc coords
+                        ErrorHandler.Error("Unhadled Draw Command!");
+                        break;
                 }
-                else
-                {
-                    SetCoords(true); //Set the linear and arc coords
-                }
+
                 running = true; //Set the simulator state
             }
             else //The draw has started running
             {
                 if (Core.group[1] == GMode.G00) //Rapid Move Draw
                 {
-                    draw = false; //No trail
-                    trail.emitting = draw; //Determines whether a trail would be drawn or not
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                    t += Time.deltaTime / d; //Time Control
+                    t += (mVelocity / (60 * d)) * Time.deltaTime * mSpeed; //Time Control (mVelocity is the default movement velocity)
                 }
                 else if (Core.group[1] == GMode.G01) //Linear Move Draw
                 {
-                    draw = true; //Draw a trail
-                    trail.emitting = draw; //Determines whether a trail would be drawn or not
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    currentLine.SetPosition(1, effector.transform.position);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
+                }
+                else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
+                {
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    currentLine.SetPosition(1, effector.transform.position);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
+                    
+                    /*
+                    Vector3 pointOnCircle = centerPoint + startCoord + radius * new Vector3(Mathf.Cos(degree), 0, Mathf.Sin(degree));
+
+                    effector.transform.position = Vector3.Lerp(effector.transform.position, pointOnCircle, m);
+                    m += Time.deltaTime;
+                    //degree += 1; //Draw the line divisons degree by degree
+                    */
+                }
+
+                /* 
+                else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
+                {
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
                     t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
                 }
+                */
             }
 
-            /* Arc Drawing Code
-            if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
-            {
-                draw = true; SetCoords(true);
-                float drawAngle = Mathf.LerpAngle(0, angle, degree/angle);
-                Vector3 pointOnCircle = centerPoint + radius * new Vector3(Mathf.Cos(drawAngle), 0, Mathf.Sin(drawAngle));
 
-                effector.transform.position = pointOnCircle;
-                degree += 1 * Time.deltaTime; //Time Control
-            }
-            else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
-            {
-                draw = true; SetCoords(true); 
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                t += (Core.feedRate / (60 * d)) * Time.deltaTime; //Time Control
-            }
-            */
-            
             //Timing Control
             if (t >= 1.0f)
             {
+                //Approximate the line to the correct ending
+                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
                 t = 0f; running = false;
-                Core.mode = CoreMode.drawEnd;
-                ErrorHandler.Log("Done with Linear Drawing!");
+                Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Linear Drawing!");
             }
 
             //Arc Draw Timing Control
-            if (degree > angle) //Should be the angle between these 2 vectors
+            if (m >= 1.0f)
             {
-                degree = 0f; //running = false;
-                //Core.mode = CoreMode.drawEnd;
-                ErrorHandler.Log("Done with Arc Drawing!");
+                m = 0f; //Done with one degree of drawing
+                degree++;
+            }
+
+            if (degree == angle - 1) //It has gone the complete no of degrees it wanted to
+            {
+                //TODO: Approximate the end effector
+                effector.transform.position = endCoord;
+
+                degree = 0f; running = false;
+                Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Arc Drawing!");
             }
         }
 
@@ -127,14 +168,17 @@ public class ArmControl : MonoBehaviour
 
     public void SetCoords(bool drawArcs = false)
     {
+        LoadMovementParameters(); //Load the parameters as specified in the settings
         ResetCoords(); //Clear the coordinates holder
-
         SetLinearCoords(); //Set the linear coordinates
+
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates if that setting is on
         }
-        ErrorHandler.Log("Set Coordinates");
+
+        ErrorHandler.Log("Starting Point: " + startCoord);
+        ErrorHandler.Log("End Point: " + endCoord);
     }
 
     /// <summary>Sets the coordinates required to draw linear lines</summary>
@@ -143,7 +187,18 @@ public class ArmControl : MonoBehaviour
         ErrorHandler.Log("Setting the Linear Coords");
         if (Core.positionMode == PositionMode.absolute)
         {
-            endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
+            foreach(var s in Core.coordList)
+            {
+                ErrorHandler.Log("Coordinate: " + s);
+            }
+
+            //The coordinates z and y are flipped becaue of the gcode coordinate system
+            endCoord = new()
+            {
+                x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x,
+                y = Core.coordList.Contains("z") ? Core.coord.z : startCoord.y,
+                z = Core.coordList.Contains("y") ? Core.coord.y : startCoord.z
+            };
         }
         else //PositionMode.incremental
         {
@@ -156,7 +211,7 @@ public class ArmControl : MonoBehaviour
     public void SetArcCoords()
     {
         ErrorHandler.Log("Setting the Arc Coords");
-        
+
         Vector3 cp = new Vector3(Core.coord.i, Core.coord.k, Core.coord.j);
         if (Core.arcMode == PositionMode.arcAbsolute)
         {
@@ -188,7 +243,7 @@ public class ArmControl : MonoBehaviour
 
         angle = CalculateAngle(startCoord, endCoord, centerPoint);
     }
-    
+
     public void CheckIfDone()
     {
         if (Core.mode == CoreMode.drawEnd || Core.mode == CoreMode.dwellEnd)
@@ -203,9 +258,9 @@ public class ArmControl : MonoBehaviour
     {
         d = 0; degree = 0;
         angle = 0; radius = 0;
-        endCoord = new();
-        centerPoint = new();
-        startCoord = effector.transform.position;
+        endCoord = Vector3.zero;
+        centerPoint = Vector3.zero;
+        startCoord = end.transform.position; //The positon should be gotten from the tip
     }
 
     public Vector3 CalculateCentrePoint(Vector3 start, Vector3 end, float radius)
@@ -239,6 +294,16 @@ public class ArmControl : MonoBehaviour
     {
         Vector3 a = start - cp;
         Vector3 b = end - cp;
+
+        //float startAngle = Mathf.Atan2(a.y - b.y, a.x - b.x) * Mathf.Rad2Deg;
+        //float endAngle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
+
         return Mathf.Acos(Vector3.Dot(a, b) / (a.magnitude * b.magnitude)) * Mathf.Rad2Deg;
+    }
+    
+    public void LoadMovementParameters()
+    {
+        mVelocity = PlayerPrefs.GetInt("velocity");
+        mSpeed = PlayerPrefs.GetInt("speed");
     }
 }

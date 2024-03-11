@@ -16,7 +16,6 @@ public class AppManager : MonoBehaviour
     [SerializeField] GameObject grid;
 
     [Header("NC Code File Path")]
-    private System.Windows.Forms.OpenFileDialog fileDialog;
     public static List<string> fileBuffer;
     public CodeControl codeController;
     public static LoadMode loadMode = LoadMode.unloaded;
@@ -26,7 +25,7 @@ public class AppManager : MonoBehaviour
         Core.Init();
         ErrorHandler.Init();
         CommandDefinitions.Init();
-        fileBuffer = new List<string>(); //Create a file buffer to store the loaded file 
+        UnLoadFile();
         UpdateUI();
     }
 
@@ -34,17 +33,24 @@ public class AppManager : MonoBehaviour
     public void SelectFile()
     {
         // Create filter
-        var extensions = new[]{ new ExtensionFilter("NC Files", "nc" ) };
+        var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
+
+        //Reset the buffer to make sure there is no left over file when restarting
+        UnLoadFile();
 
         //Open the context menu
-        var path = StandaloneFileBrowser.OpenFilePanel("Open GCode File", "", extensions, false);
-        LoadFile(path[0]);
+        var path = StandaloneFileBrowser.OpenFilePanel("Select GCode File", "", extensions, false);
+        if (path.Length > 0)
+        {
+            //If multiple paths were selected, use the first one
+            LoadFile(path[0]);
+        }
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>
     void LoadFile(string path)
     {
-        if (File.Exists(path) != true) //No file was picked
+        if (File.Exists(path) != true) //No valid file path was picked
         {
             ErrorHandler.Error("File does not exist!");
             return;
@@ -60,10 +66,10 @@ public class AppManager : MonoBehaviour
                 ErrorHandler.Error("Error Reading file: " + e);
             }
 
-            string filename = Path.GetFileName(path); //Get the name of the file
-            ErrorHandler.Log("[File]: " + filename);
-            SetTitleText("Axes - " + filename); //Set the tile of the window to the name of the file
+            string fileName = Path.GetFileName(path); //Get the name of the file
+            SetTitleText("Axes - " + fileName); //Set the tile of the window to the name of the file
             loadMode = LoadMode.loaded; //Set the file loaded mode
+            ErrorHandler.Log(("[File]: " + fileName + " " + loadMode));
         }
     }
 
@@ -83,6 +89,8 @@ public class AppManager : MonoBehaviour
     /// <summary> Updates the UI for the Core Variables and Debug Handler </summary>
     public void UpdateUI()
     {
+        codeLine.text = ErrorHandler.current;
+
         //Update the text for the Core variables
         machineVariables.text = "Spindle Speed: " + Core.spindleSpeed + "\n" +
                                 "Feed Rate: " + Core.feedRate + "\n" +
@@ -109,5 +117,8 @@ public class AppManager : MonoBehaviour
         grid.SetActive(!grid.activeSelf);
     }
 
-    public void Quit() => UnityEngine.Application.Quit();
-};
+    public void Quit()
+    {
+        Application.Quit();
+    }
+}

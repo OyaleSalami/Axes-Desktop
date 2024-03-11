@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AxesCore
@@ -132,6 +133,7 @@ namespace AxesCore
         {
             Core.coord = new();
             Core.coordMode = CoordMode.nil;
+            Core.coordList = new();
         }
 
         public static void SetCoordMode(CoordMode mode)
@@ -359,9 +361,12 @@ namespace AxesCore
         public static CoordMode coordMode;
         public static GMode[] group;
 
+        public static List<string> coordList;
+
         /// <summary>Sets/Resets the parameters for the Core</summary>
         public static void Init()
         {
+            feedRate = PlayerPrefs.GetInt("feedrate");
             coord = new Coord();
             mode = CoreMode.normal; //The default state of the simulator
             upm = UPM.millimeters;

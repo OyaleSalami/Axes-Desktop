@@ -69,14 +69,17 @@ namespace AxesCore
 
                     case 'x': //Set the x coordinate
                         Core.coord.x = ReadValue(token);
+                        Core.coordList.Add("x");
                         break;
 
                     case 'y': //Set the y coordinate
                         Core.coord.y = ReadValue(token);
+                        Core.coordList.Add("y");
                         break;
 
                     case 'z': //Set the z coordinate
                         Core.coord.z = ReadValue(token);
+                        Core.coordList.Add("z");
                         break;
 
                     case 'a': //Set the a coordinate
