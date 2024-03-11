@@ -34,7 +34,7 @@ public class AppManager : MonoBehaviour
     {
         // Create filter
         var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
-        
+
         //Reset the buffer to make sure there is no left over file when restarting
         UnLoadFile();
 
@@ -66,10 +66,10 @@ public class AppManager : MonoBehaviour
                 ErrorHandler.Error("Error Reading file: " + e);
             }
 
-            string filename = Path.GetFileName(path); //Get the name of the file
-            SetTitleText("Axes - " + filename); //Set the tile of the window to the name of the file
-            ErrorHandler.Log("[File]: " + filename + "  Loaded");
+            string fileName = Path.GetFileName(path); //Get the name of the file
+            SetTitleText("Axes - " + fileName); //Set the tile of the window to the name of the file
             loadMode = LoadMode.loaded; //Set the file loaded mode
+            ErrorHandler.Log(("[File]: " + fileName + " " + loadMode));
         }
     }
 
@@ -117,5 +117,8 @@ public class AppManager : MonoBehaviour
         grid.SetActive(!grid.activeSelf);
     }
 
-    public void Quit() => UnityEngine.Application.Quit();
-};
+    public void Quit()
+    {
+        Application.Quit();
+    }
+}

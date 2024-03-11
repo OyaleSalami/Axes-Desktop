@@ -8,10 +8,10 @@ namespace AxesCore
     public class ErrorHandler
     {
         /// <summary>Where the log files would be stored</summary>
-        static string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Axes Core/";
+        private static string path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/Axes Core/";
 
         /// <summary>Name of the log file</summary>
-        static string filename;
+        private static readonly string filename;
         public static string filePath;
         internal static string current;
 
@@ -26,7 +26,11 @@ namespace AxesCore
             string filename = DateTime.Now.ToString("MddHHmms") + ".log";
             filePath = Path.Combine(path, filename);
 
-            File.Create(filePath);
+            //Create a log file
+            //File.Create(filePath, 0, FileOptions.RandomAccess);
+            FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate,
+                                        FileAccess.ReadWrite,
+                                        FileShare.None);
         }
 
         /// <summary>Adds a debug statement to the logs</summary>
@@ -38,13 +42,11 @@ namespace AxesCore
                 {
                     if (error != true)
                     {
-                        Debug.Log(log);
-                        sw.WriteLine("[Log]: " + log);
+                        Debug.Log(log); sw.WriteLine("[Log]: " + log);
                     }
                     else
                     {
-                        Debug.LogError(error);
-                        sw.WriteLine("[Error]: " + error);
+                        Debug.LogError(error); sw.WriteLine("[Error]: " + error);
                     }
 
                     sw.Close(); sw.Dispose();

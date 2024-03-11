@@ -4,11 +4,12 @@ using UnityEngine;
 public class ArmControl : MonoBehaviour
 {
     [Header("Miscellenous")]
+    [SerializeField] GameObject arcPrefab;
     [SerializeField] GameObject linePrefab;
     [SerializeField] GameObject drawHolder;
     LineRenderer currentLine;
 
-    [SerializeField] bool running;
+    [SerializeField] bool running = false;
 
     [Header("Effector Parameters")]
     [SerializeField] GameObject effector; //The effector object
@@ -46,13 +47,6 @@ public class ArmControl : MonoBehaviour
     float scale;
     float mSpeed;
     float mVelocity;
-    float mFeedrate;
-
-    void Start()
-    {
-        running = false;
-        LoadMovementParameters();
-    }
 
     void Update()
     {
@@ -85,13 +79,15 @@ public class ArmControl : MonoBehaviour
 
                     case GMode.G02:
                         SetCoords(true); //Set the linear and arc coords
-                        currentLine = Instantiate(linePrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        //Create a line renderer //Set its first position
+                        currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
                         currentLine.SetPosition(0, startCoord);
                         break;
 
                     case GMode.G03:
                         SetCoords(true); //Set the linear and arc coords
-                        currentLine = Instantiate(linePrefab, drawHolder.transform).GetComponent<LineRenderer>();
+                        //Create a line renderer //Set its first position
+                        currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
                         currentLine.SetPosition(0, startCoord);
                         break;
 
@@ -118,11 +114,17 @@ public class ArmControl : MonoBehaviour
                 }
                 else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
                 {
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    currentLine.SetPosition(1, effector.transform.position);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
+                    
+                    /*
                     Vector3 pointOnCircle = centerPoint + startCoord + radius * new Vector3(Mathf.Cos(degree), 0, Mathf.Sin(degree));
 
                     effector.transform.position = Vector3.Lerp(effector.transform.position, pointOnCircle, m);
                     m += Time.deltaTime;
                     //degree += 1; //Draw the line divisons degree by degree
+                    */
                 }
 
                 /* 
@@ -190,14 +192,13 @@ public class ArmControl : MonoBehaviour
                 ErrorHandler.Log("Coordinate: " + s);
             }
 
-            endCoord = new();
-
-            endCoord.x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x;
-            endCoord.y = Core.coordList.Contains("z") ? Core.coord.z : startCoord.y;
-            endCoord.z = Core.coordList.Contains("y") ? Core.coord.y : startCoord.z;
-
-            //endCoord = new Vector3(endCoord.x, endCoord.z, endCoord.y);
-            //endCoord = new Vector3(Core.coord.x, Core.coord.z, Core.coord.y);
+            //The coordinates z and y are flipped becaue of the gcode coordinate system
+            endCoord = new()
+            {
+                x = Core.coordList.Contains("x") ? Core.coord.x : startCoord.x,
+                y = Core.coordList.Contains("z") ? Core.coord.z : startCoord.y,
+                z = Core.coordList.Contains("y") ? Core.coord.y : startCoord.z
+            };
         }
         else //PositionMode.incremental
         {
@@ -293,13 +294,16 @@ public class ArmControl : MonoBehaviour
     {
         Vector3 a = start - cp;
         Vector3 b = end - cp;
+
+        //float startAngle = Mathf.Atan2(a.y - b.y, a.x - b.x) * Mathf.Rad2Deg;
+        //float endAngle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
+
         return Mathf.Acos(Vector3.Dot(a, b) / (a.magnitude * b.magnitude)) * Mathf.Rad2Deg;
     }
-
+    
     public void LoadMovementParameters()
     {
         mVelocity = PlayerPrefs.GetInt("velocity");
         mSpeed = PlayerPrefs.GetInt("speed");
-        mFeedrate = PlayerPrefs.GetInt("feedrate");
     }
 }
