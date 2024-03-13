@@ -12,7 +12,13 @@ public class temp : MonoBehaviour
 
     void Start()
     {
+        //float startAngle = Mathf.Atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x) * Mathf.Rad2Deg;
+        //float endAngle = Mathf.Atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x) * Mathf.Rad2Deg;
 
+        //Vector3 pointOnCircle = centerPoint + startCoord + radius * new Vector3(Mathf.Cos(degree), 0, Mathf.Sin(degree));
+
+        //effector.transform.position = Vector3.Lerp(effector.transform.position, pointOnCircle, m);
+        //m += Time.deltaTime;
     }
 
     // Update is called once per frame

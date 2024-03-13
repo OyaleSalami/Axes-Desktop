@@ -165,6 +165,7 @@ namespace AxesCore
 
             tokens.AddRange(line.Split(' '));  //Split the block using space as a delimitter
             tokens.RemoveAll(IsASpace); //Remove all the extra spaces from the code
+            tokens.RemoveAll(IsAComment); //Remove all the comments
             return tokens;
         }
 
@@ -172,6 +173,12 @@ namespace AxesCore
         private static bool IsASpace(String s)
         {
             return s == " ";
+        }
+
+        /// <summary>REturns trus if the string starts with a (</summary>
+        private static bool IsAComment(String s)
+        {
+            return s.StartsWith('(');
         }
     }
 
