@@ -153,7 +153,7 @@ public class ArmControl : MonoBehaviour
             if (m >= 1.0f)
             {
                 effector.transform.position = Vector3.Lerp(startCoord, arcPoints[segmentStep], 1);
-                m = 0f; //Done with one segment of drawing
+                m = 0; //Done with one segment of drawing
                 segmentStep++;
             }
 
@@ -162,6 +162,7 @@ public class ArmControl : MonoBehaviour
             {
                 //Approximate the line to the correct ending
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
+                currentLine.SetPosition(segmentStep-1, endCoord);
                 t = 0f; m = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done with Arc Drawing!");
             }
@@ -230,8 +231,8 @@ public class ArmControl : MonoBehaviour
             centerPoint = CalculateCentrePoint(startCoord, endCoord, radius);
         }
         ErrorHandler.Log("CenterPoint: " + centerPoint);
-        startAngle = Mathf.Atan2(startCoord.y - centerPoint.y, startCoord.x - centerPoint.x);
-        endAngle = Mathf.Atan2(endCoord.y - centerPoint.y, endCoord.x - centerPoint.x);
+        startAngle = Mathf.Atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x);
+        endAngle = Mathf.Atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
 
         if (startAngle < 0) startAngle = (float)((Mathf.PI * 2.0) + startAngle);
         if (endAngle < 0) endAngle = (float)((Mathf.PI * 2.0) + endAngle);
@@ -251,15 +252,17 @@ public class ArmControl : MonoBehaviour
         sweep = endAngle - startAngle;
         arcLength = CalculateArcLength(sweep, radius);
 
-        segmentCount = (int)(arcLength / segmentLength); //Calculate the segment count
+        //segmentCount = (int)(arcLength / segmentLength); //Calculate the segment count
+        segmentCount = 5; //Calculate the segment count
         angleStep = (endAngle - startAngle) / (segmentCount - 1); //Calculate angle step based on number of segments
         arcPoints = new Vector3[segmentCount]; //Create an array of Vector3 points for the arc
 
         for (int i = 0; i < segmentCount; i++) // Loop through segments and calculate positions
         {
-            float angle = startAngle + angleStep * i; //Angles are already in radians
+            float angle = startAngle + (angleStep * i); //Angles are already in radians
             //float radians = Mathf.Deg2Rad * angle;
-            arcPoints[i] = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            //arcPoints[i] = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            arcPoints[i] = centerPoint + (radius * new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)));
         }
     }
 
