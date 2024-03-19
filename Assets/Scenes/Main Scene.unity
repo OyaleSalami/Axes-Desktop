@@ -3711,6 +3711,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1644201873}
     - target: {fileID: 2281724051626660435, guid: 311a18447ce9b4a4c824868076841a40, type: 3}
+      propertyPath: arcPrefab
+      value: 
+      objectReference: {fileID: 9050547233746615982, guid: 0b1cfe2d15aedf540a5a174b562adff9, type: 3}
+    - target: {fileID: 2281724051626660435, guid: 311a18447ce9b4a4c824868076841a40, type: 3}
       propertyPath: drawHolder
       value: 
       objectReference: {fileID: 1285164812}

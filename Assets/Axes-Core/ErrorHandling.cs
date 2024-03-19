@@ -30,7 +30,7 @@ namespace AxesCore
             //File.Create(filePath, 0, FileOptions.RandomAccess);
             FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate,
                                         FileAccess.ReadWrite,
-                                        FileShare.None);
+                                        FileShare.ReadWrite);
         }
 
         /// <summary>Adds a debug statement to the logs</summary>
@@ -46,7 +46,7 @@ namespace AxesCore
                     }
                     else
                     {
-                        Debug.LogError(error); sw.WriteLine("[Error]: " + error);
+                        Debug.LogError(error); sw.WriteLine("[Error]: " + log);
                     }
 
                     sw.Close(); sw.Dispose();
@@ -61,6 +61,5 @@ namespace AxesCore
         {
             Log(error, true);
         }
-
     }
 }
