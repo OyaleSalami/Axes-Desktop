@@ -91,9 +91,9 @@ public class ArmControl : MonoBehaviour
                         SetCoords(true); //Set the linear and arc coords
                         //Create a line renderer //Set its first position
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
-                        currentLine.positionCount = segmentCount; // Set the counts of the Line Renderer
                         currentLine.SetPosition(0, startCoord);
-                        segmentStep++;
+                        //currentLine.positionCount = segmentCount; // Set the counts of the Line Renderer
+                        //segmentStep++;
                         break;
 
                     case GMode.G03:
@@ -101,9 +101,9 @@ public class ArmControl : MonoBehaviour
                         SetCoords(true); //Set the linear and arc coords
                         //Create a line renderer //Set its first position
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
-                        currentLine.positionCount = segmentCount; // Set the counts of the Line Renderer
                         currentLine.SetPosition(0, startCoord);
-                        segmentStep++;
+                        //currentLine.positionCount = segmentCount; // Set the counts of the Line Renderer
+                        //segmentStep++;
                         break;
 
                     default:
@@ -128,15 +128,15 @@ public class ArmControl : MonoBehaviour
                 }
                 else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
                 {
-                    effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], m);
-                    currentLine.SetPosition(segmentStep, effector.transform.position);
-                    m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    currentLine.SetPosition(1, effector.transform.position);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
                 {
-                    effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], m);
-                    currentLine.SetPosition(segmentStep, effector.transform.position);
-                    m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
+                    effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
+                    currentLine.SetPosition(1, effector.transform.position);
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
             }
 

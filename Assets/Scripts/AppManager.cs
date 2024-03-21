@@ -32,25 +32,25 @@ public class AppManager : MonoBehaviour
     /// <summary>Brings up the context menu to select an NC file</summary>
     public void SelectFile()
     {
-        // Create filter
-        var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
-
         //Reset the buffer to make sure there is no left over file when restarting
         UnLoadFile();
 
+        // Create filter
+        var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
+
         //Open the context menu
         var path = StandaloneFileBrowser.OpenFilePanel("Select GCode File", "", extensions, false);
-        if (path.Length > 0)
+
+        if (path[0] != null)
         {
-            //If multiple paths were selected, use the first one
-            LoadFile(path[0]);
+            LoadFile(path);
         }
     }
 
     /// <summary>Attempts to load the selected file into a buffer</summary>
-    void LoadFile(string path)
+    void LoadFile(string[] path)
     {
-        if (File.Exists(path) != true) //No valid file path was picked
+        if (File.Exists(path[0]) != true) //No valid file path was picked
         {
             ErrorHandler.Error("File does not exist!");
             return;
@@ -59,14 +59,14 @@ public class AppManager : MonoBehaviour
         {
             try //Read the lines of the file
             {
-                fileBuffer.AddRange(File.ReadAllLines(path));
+                fileBuffer.AddRange(File.ReadAllLines(path[0]));
             }
             catch (Exception e) //An error occured
             {
                 ErrorHandler.Error("Error Reading file: " + e);
             }
 
-            string fileName = Path.GetFileName(path); //Get the name of the file
+            string fileName = Path.GetFileName(path[0]); //Get the name of the file
             SetTitleText("Axes - " + fileName); //Set the tile of the window to the name of the file
             loadMode = LoadMode.loaded; //Set the file loaded mode
             ErrorHandler.Log(("[File]: " + fileName + " " + loadMode));
