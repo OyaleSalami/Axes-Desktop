@@ -13,7 +13,7 @@ namespace AxesCore
         /// <summary>Name of the log file</summary>
         private static readonly string filename;
         public static string filePath;
-        internal static string current;
+        public static string current;
 
         /// <summary>Create new logs to store the error and debug commands!</summary>
         public static void Init()
@@ -25,16 +25,16 @@ namespace AxesCore
             //The filename would be given by the current time
             string filename = DateTime.Now.ToString("MddHHmms") + ".log";
             filePath = Path.Combine(path, filename);
+            current = "";
 
-            //Create a log file
+            //Create the log file
             //File.Create(filePath, 0, FileOptions.RandomAccess);
-            FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate,
-                                        FileAccess.ReadWrite,
-                                        FileShare.ReadWrite);
+            FileStream fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            fs.Close(); fs.Dispose();
         }
 
         /// <summary>Adds a debug statement to the logs</summary>
-        public static void Log(string log, bool error = false)
+        private static void Log(string log, bool error = false)
         {
             using (FileStream fs = new FileStream(filePath, FileMode.Append, FileAccess.Write))
             {
@@ -46,7 +46,7 @@ namespace AxesCore
                     }
                     else
                     {
-                        Debug.LogError(error); sw.WriteLine("[Error]: " + log);
+                        Debug.LogError(log); sw.WriteLine("[Error]: " + log);
                     }
 
                     sw.Close(); sw.Dispose();
@@ -60,6 +60,12 @@ namespace AxesCore
         public static void Error(string error)
         {
             Log(error, true);
+        }
+
+        /// <summary>Adds a log statement to the logs</summary>
+        public static void Log(string log)
+        {
+            Log(log, false);
         }
     }
 }

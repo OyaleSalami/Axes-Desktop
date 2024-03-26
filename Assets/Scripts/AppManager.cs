@@ -22,9 +22,9 @@ public class AppManager : MonoBehaviour
 
     void Start()
     {
+        CommandDefinitions.Init();
         Core.Init();
         ErrorHandler.Init();
-        CommandDefinitions.Init();
         UnLoadFile();
         UpdateUI();
     }
@@ -36,12 +36,12 @@ public class AppManager : MonoBehaviour
         UnLoadFile();
 
         // Create filter
-        var extensions = new[] { new ExtensionFilter("NC Files", "nc"), new ExtensionFilter("NC Files", "txt") };
+        var extensions = new[] { new ExtensionFilter("NC File", "nc"), new ExtensionFilter("NC File", "txt") };
 
         //Open the context menu
         var path = StandaloneFileBrowser.OpenFilePanel("Select GCode File", "", extensions, false);
 
-        if (path[0] != null)
+        if (path.Length > 0)
         {
             LoadFile(path);
         }
@@ -64,6 +64,7 @@ public class AppManager : MonoBehaviour
             catch (Exception e) //An error occured
             {
                 ErrorHandler.Error("Error Reading file: " + e);
+                return;
             }
 
             string fileName = Path.GetFileName(path[0]); //Get the name of the file

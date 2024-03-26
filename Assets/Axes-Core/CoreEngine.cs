@@ -366,7 +366,7 @@ namespace AxesCore
         /// <summary>Sets/Resets the parameters for the Core</summary>
         public static void Init()
         {
-            feedRate = PlayerPrefs.GetInt("feedrate");
+            feedRate = PlayerPrefs.GetInt("feedrate", 20);
             coord = new Coord();
             mode = CoreMode.normal; //The default state of the simulator
             upm = UPM.millimeters;

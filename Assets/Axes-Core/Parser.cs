@@ -5,16 +5,15 @@ namespace AxesCore
 {
     public class Parser
     {
-        /// <summary> Interprets the block and sets the correct parameters on the Core/Core Engine</summary>
+        /// <summary> Interprets the block and sets the correct parameters in the Core/Core Engine</summary>
         public static void InterpretTokens(List<string> tokens)
         {
             //Exit if the token list is empty
             if(tokens.Count < 1) { ErrorHandler.Error("Empty Token List"); return; }
+            
+            CoreEngine.ResetCoord(); //Prepare the Core to take new coordinates
 
-            //Prepare Core to take new coordinates
-            CoreEngine.ResetCoord();
-
-            //Cycle through all the tokens and set the parameters and call the appropriate functions
+            //Cycle through all the tokens in a block, set the parameters and call the appropriate handlers
             foreach (string token in tokens)
             {
                 ErrorHandler.Log("Interpreting token : " + token);
@@ -92,22 +91,32 @@ namespace AxesCore
 
                     case 'c': //Set the c coordinate
                         Core.coord.c = ReadValue(token);
+                        Core.coordList.Add("c");
+                        break;
+
+                    case 'e': //Set the e coordinate
+                        Core.coord.e = ReadValue(token);
+                        Core.coordList.Add("e");
                         break;
 
                     case 'r': //Set the r coordinate
                         Core.coord.r = ReadValue(token);
+                        Core.coordList.Add("r");
                         break;
 
                     case 'i': //Set the i coordinate
                         Core.coord.i = ReadValue(token);
+                        Core.coordList.Add("i");
                         break;
 
                     case 'j': //Set the j coordinate
                         Core.coord.j = ReadValue(token);
+                        Core.coordList.Add("j");
                         break;
 
                     case 'k': //Set the k coordinate
                         Core.coord.k = ReadValue(token);
+                        Core.coordList.Add("k");
                         break;
 
                     case '%': //End of the program
@@ -120,8 +129,7 @@ namespace AxesCore
                 }
             }
 
-            //Handle the coordinates set by the parameters above
-            CoreEngine.HandleCoordinates();
+            CoreEngine.HandleCoordinates(); //Handle the coordinates set by the parameters above
         }
     
         /// <summary>Takes a token and reads the value specified after it</summary>
@@ -181,5 +189,4 @@ namespace AxesCore
             return s.StartsWith('(');
         }
     }
-
 }

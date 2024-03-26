@@ -11,8 +11,8 @@ public class temp : MonoBehaviour
     [SerializeField] Vector3 start;
     [SerializeField] Vector3 end;
     [SerializeField] Vector3 centerPoint;
-    [SerializeField] float radius;
-    public int segments = 20;
+    [SerializeField] float radius = 3;
+    [SerializeField] int segments = 20;
 
     void Start()
     {
@@ -23,8 +23,8 @@ public class temp : MonoBehaviour
 
         //effector.transform.position = Vector3.Lerp(effector.transform.position, pointOnCircle, m);
         //m += Time.deltaTime;
-        line = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();;
         //line.positionCount = 20; //20 segments
+        line = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>();
     }
 
     // Update is called once per frame
@@ -40,11 +40,9 @@ public class temp : MonoBehaviour
     {
         Debug.Log("Drawn!");
 
-        //Let's draw a circle with radius 10 and centre at (0, 0)
-        float radius = 10.0f;
-        float startAngle = 0.0f;
-        float endAngle = 90.0f;
-        int segments = 30;
+        //Let's draw a circle with centre at (2, 3)
+        float startAngle = 270f;
+        float endAngle = 90f;
 
         // Calculate angle step based on number of segments
         float angleStep = (endAngle - startAngle) / (segments - 1);
@@ -105,6 +103,31 @@ public class temp : MonoBehaviour
         s.x = center.x - Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * (start.y - end.y) / d);
         s.y = center.y - Mathf.Sqrt(Mathf.Pow(r, 2) - Mathf.Pow(d / 2, 2) * (end.x - start.x) / d);
     }
+
+    /// <summary>Returns the degree of the angle between these 2 vectors in degrees</summary>
+    public float CalculateAngle(Vector3 start, Vector3 end, Vector3 cp)
+    {
+        Vector3 a = start - cp;
+        Vector3 b = end - cp;
+
+        return Mathf.Acos(Vector3.Dot(a, b) / (a.magnitude * b.magnitude)) * Mathf.Rad2Deg;
+    }
+
+    public float atan3(Vector3 start, Vector3 end)
+    {
+        float dy = start.x - end.x;
+        float dx = start.y - end.y;
+
+        double a = Mathf.Atan2(dy, dx);
+
+        if (a < 0)
+        {
+            a = (Mathf.PI * 2.0) + a;
+        }
+
+        return (float)a;
+    }
+
 }
 
 ///Equation of a circle
