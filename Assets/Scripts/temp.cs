@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.UIElements;
 
 public class temp : MonoBehaviour
 {
@@ -12,7 +11,11 @@ public class temp : MonoBehaviour
     [SerializeField] Vector3 end;
     [SerializeField] Vector3 centerPoint;
     [SerializeField] float radius = 3;
+    [SerializeField] float startA = 0;
+    [SerializeField] float endA = 90;
+    [SerializeField] float sweep;
     [SerializeField] int segments = 20;
+    [SerializeField] bool clockwise = true;
 
     void Start()
     {
@@ -39,13 +42,17 @@ public class temp : MonoBehaviour
     public void Draw()
     {
         Debug.Log("Drawn!");
+        float endAngle = endA; float startAngle = startA;
+        sweep = endAngle - startAngle; //If negative = Clockwise //If positive = Anticlockwise
 
-        //Let's draw a circle with centre at (2, 3)
-        float startAngle = 270f;
-        float endAngle = 90f;
+        if(sweep > 90)
+        {
+            startAngle += 360;
+        }
+        sweep = endAngle - startAngle;
 
         // Calculate angle step based on number of segments
-        float angleStep = (endAngle - startAngle) / (segments - 1);
+        float angleStep = sweep / (segments - 1);
 
         // Create an array of Vector3 points for the arc
         Vector3[] points = new Vector3[segments];
@@ -53,9 +60,9 @@ public class temp : MonoBehaviour
         // Loop through segments and calculate positions
         for (int i = 0; i < segments; i++)
         {
-            float angle = startAngle + angleStep * i;
+            float angle = startAngle + (angleStep * i);
             float radians = Mathf.Deg2Rad * angle;
-            points[i] = new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius);
+            points[i] = centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius);
         }
 
         // Set the positions of the Line Renderer

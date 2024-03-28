@@ -6154,7 +6154,11 @@ MonoBehaviour:
   end: {x: 10, y: 10, z: 0}
   centerPoint: {x: 0, y: 0, z: 0}
   radius: 6
+  startA: 0
+  endA: 90
+  sweep: 0
   segments: 20
+  clockwise: 1
 --- !u!1 &1892680290
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,7 +10,7 @@ public class Settings : MonoBehaviour
     [SerializeField] InputField feedrateInput;
     [SerializeField] InputField maxVelocityInput;
 
-    void Start()
+    void Awake()
     {
         LoadDefaults(); UpdateUI();
     }
@@ -45,9 +45,9 @@ public class Settings : MonoBehaviour
 
     public void SetSpeed()
     {
-        if (Int32.Parse(speedInput.text) >= 3)
+        if (Int32.Parse(speedInput.text) > 5)
         {
-            speedInput.text = "3";
+            speedInput.text = "5";
         }
 
         if (Int32.Parse(speedInput.text) <= 0)

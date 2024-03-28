@@ -46,7 +46,7 @@ public class CameraControl : MonoBehaviour
             float xMov = Input.GetAxis("Horizontal");
             float yMov = Input.GetAxis("Vertical");
 
-            transform.position += (transform.right * xMov + transform.up * yMov) * 2 * Time.deltaTime;
+            transform.position += (transform.right * xMov + transform.up * yMov) * 5 * Time.deltaTime;
         }
 
         else if (mode == CamMode.Rotate)

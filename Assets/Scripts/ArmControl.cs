@@ -1,6 +1,5 @@
 ﻿using AxesCore;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class ArmControl : MonoBehaviour
@@ -45,7 +44,7 @@ public class ArmControl : MonoBehaviour
     /// <summary>The number of segments in an arc</summary>
     private int segmentCount;
     /// <summary>The list of the points in the arc</summary>
-    private  List<Vector3> arcPoints;
+    private List<Vector3> arcPoints;
 
     //Timers
     /// <summary>The timer for Lerping Linear Draw Commands</summary>
@@ -96,9 +95,8 @@ public class ArmControl : MonoBehaviour
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords 
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.positionCount = segmentCount;
-                        Debug.Log("Start Coordinate: " + startCoord);
-                        currentLine.SetPosition(0, startCoord); segmentStep++; //Set the first position of the arc and add the index
+                        currentLine.SetPosition(segmentStep, startCoord); segmentStep++; //Set the first position of the arc and add the index
+                        currentLine.positionCount = segmentStep + 1;
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
@@ -155,7 +153,7 @@ public class ArmControl : MonoBehaviour
                 //Approximate the line segment to the correct ending
                 effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], 1);
                 m = 0; //Done with one segment of drawing
-                segmentStep++;
+                segmentStep++; currentLine.positionCount = segmentStep + 1;
             }
 
             //Approximate the endings (Done with the drawing of all segments)
@@ -163,7 +161,7 @@ public class ArmControl : MonoBehaviour
             {
                 //Approximate the last line segment to the correct ending
                 effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 2], arcPoints[segmentStep - 1], 1);
-                currentLine.SetPosition(segmentStep - 1, endCoord);
+                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
                 t = 0f; m = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With The Arc Drawing!");
             }
@@ -215,7 +213,7 @@ public class ArmControl : MonoBehaviour
         //Setting up the centerpoint
         if (!Core.coordList.Contains("i") && !Core.coordList.Contains("j") && !Core.coordList.Contains("k"))
         {
-            //Centerpoint was not specified
+            //Centerpoint was not specified (Calculate it!)
             radius = Core.coord.r;
             centerPoint = CalculateCentrePoint(startCoord, endCoord, radius);
         }
@@ -224,15 +222,22 @@ public class ArmControl : MonoBehaviour
             Vector3 cp = new Vector3(Core.coord.i, Core.coord.k, Core.coord.j); //K and J are flipped because of GCode coordinate system
             centerPoint = (Core.arcMode == PositionMode.arcAbsolute) ? cp : startCoord + cp; //Set the centerpoint in the appropriate mode
         }
-
         //Setting up the radius
         radius = Core.coordList.Contains("r") ? Core.coord.r : CalculateRadius(startCoord, centerPoint);
 
         //Setting up the Sweep, Start and End angles (Angles specified in degrees)
         startAngle = Core.coordList.Contains("c") ? Core.coord.c : CalculateStartAngle();
         endAngle = Core.coordList.Contains("e") ? Core.coord.e : CalculateEndAngle();
-        sweep = endAngle - startAngle;
+        if (startAngle < 0 || endAngle < 0) { ErrorHandler.Error("Negative Angles Are Not Allowed!"); }
+
+        bool flipDirection;
+        sweep = endAngle - startAngle; //The angle of the arc //negative = Clockwise //positive = Anticlockwise
+        if (sweep > 90) { startAngle += 360; }
+        if (sweep < -90) { startAngle -= 360; }
+
+        sweep = endAngle - startAngle; //Recalculate the sweep angle
         arcLength = CalculateArcLength(sweep, radius); //Calculate the length of the arc
+        flipDirection = (sweep < 0);
 
         //Calculate the segment count
         segmentCount = (int)(arcLength / segmentLength); //Calculate the segment count
@@ -243,10 +248,18 @@ public class ArmControl : MonoBehaviour
         for (int i = 0; i < segmentCount; i++)
         {
             //Based on if it is a clockwise arc or not
-            float angle = clockwiseArc ? (startAngle - (angleStep * i)) : (startAngle + (angleStep * i));
+            float angle = (startAngle) + (angleStep * i);
 
             float radians = Mathf.Deg2Rad * angle; //Convert angles from degrees to radian
-            arcPoints.Add(startCoord + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
+            arcPoints.Add(centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
+        }
+
+        if(clockwiseArc == true)
+        {
+            if(flipDirection != true)
+            {
+                arcPoints.Reverse();
+            }
         }
         drawArc = true;
     }
