@@ -337,7 +337,13 @@ public class ArmControl : MonoBehaviour
     /// <summary>Load default values as defined from the settings!</summary>
     public void LoadMovementParameters()
     {
-        mVelocity = PlayerPrefs.GetInt("velocity", 100);
+        //Try to load the value from the saved settings
+        mVelocity = PlayerPrefs.GetInt("velocity", 100); 
         mSpeed = PlayerPrefs.GetInt("speed", 1);
+
+        //Fail-safe if the values didn't load properly
+        mVelocity = (mVelocity <= 0) ? 100 : mVelocity;
+        mSpeed = (mSpeed <= 0) ? 1 : mSpeed;
     }
+
 }

@@ -4,14 +4,13 @@ using UnityEngine.UI;
 
 public class CodeControl : MonoBehaviour
 {
-    [SerializeField] ArmControl arm;
     [SerializeField] int lineIndex = 0;
 
     public void Update()
     {
         if (Core.mode == CoreMode.normal && AppManager.loadMode == LoadMode.loaded)
         {
-            if (lineIndex >= AppManager.fileBuffer.Count - 1)
+            if (lineIndex > AppManager.fileBuffer.Count - 1)
             {
                 Core.mode = CoreMode.EOF; //End Of File
                 ErrorHandler.Log("End Of File");

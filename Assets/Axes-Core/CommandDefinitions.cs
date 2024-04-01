@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 namespace AxesCore
 {
     public class CommandDefinitions
