@@ -5,17 +5,20 @@ using UnityEngine.UI;
 
 public class CameraControl : MonoBehaviour
 {
-    public CamMode mode;
+    [SerializeField] CamMode mode;
     [SerializeField] GameObject pivot;
     [SerializeField] float rotFactor = 50f;
 
     [Header("Origins")]
-    //Store the original position and rotation of the pivot
+    //Pivot details
     [SerializeField] Vector3 ogPivotPos;
     [SerializeField] Quaternion ogPivotRot;
-    //Store the original positon and rotation of the camera
+
+    //Camera details
     [SerializeField] Vector3 ogCameraPos;
     [SerializeField] Quaternion ogCameraRot;
+
+    [SerializeField] Camera cam;
 
     [Header("ToolBar UI")]
     [SerializeField] Image panImage;
@@ -25,6 +28,8 @@ public class CameraControl : MonoBehaviour
     void Start()
     {
         mode = CamMode.Pan;
+
+        //Store the original position and rotation of the pivot
         ogPivotPos = pivot.transform.position;
         ogCameraPos = this.transform.position;
 
@@ -46,12 +51,10 @@ public class CameraControl : MonoBehaviour
             float xMov = Input.GetAxis("Horizontal");
             float yMov = Input.GetAxis("Vertical");
 
-            transform.position += (transform.right * xMov + transform.up * yMov) * 5 * Time.deltaTime;
+            transform.position += (transform.right * xMov + transform.forward * yMov) * (7.5f * Time.deltaTime);
         }
-
-        else if (mode == CamMode.Rotate)
+        else if (mode == CamMode.Rotate) //TODO: Add mouse rotation
         {
-            //TODO: Add mouse rotation
             float xRot = Input.GetAxis("Horizontal");
             pivot.transform.Rotate(Vector3.up, -rotFactor * xRot * Time.deltaTime);
         }
@@ -68,7 +71,6 @@ public class CameraControl : MonoBehaviour
 
     public void ZoomCamera(float _factor)
     {
-        Camera cam = GetComponent<Camera>();
         if (cam.fieldOfView >= 20 && cam.fieldOfView <= 90)
         {
             cam.fieldOfView += _factor;
