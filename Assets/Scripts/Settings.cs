@@ -15,12 +15,12 @@ public class Settings : MonoBehaviour
         LoadDefaults(); UpdateUI();
     }
 
-    /// <summary>Set the default values of the settings</summary>
+    /// <summary>Set the default values of the settings if they do not exists</summary>
     void LoadDefaults()
     {
         if (PlayerPrefs.HasKey("speed") == false)
         {
-            PlayerPrefs.SetInt("speed", 1);
+            PlayerPrefs.SetInt("speed", 10);
         }
         if(PlayerPrefs.HasKey("velocity") == false)
         {
@@ -45,9 +45,9 @@ public class Settings : MonoBehaviour
 
     public void SetSpeed()
     {
-        if (Int32.Parse(speedInput.text) > 5)
+        if (Int32.Parse(speedInput.text) > 200)
         {
-            speedInput.text = "5";
+            speedInput.text = "200";
         }
 
         if (Int32.Parse(speedInput.text) <= 0)
@@ -62,14 +62,14 @@ public class Settings : MonoBehaviour
 
     public void SetVelocity()
     {
-        if (int.Parse(maxVelocityInput.text) >= 2000)
+        if (int.Parse(maxVelocityInput.text) >= 20000)
         {
-            maxVelocityInput.text = "2000";
+            maxVelocityInput.text = "20000";
         }
 
         if (int.Parse(maxVelocityInput.text) <= 0)
         {
-            maxVelocityInput.text = "1000";
+            maxVelocityInput.text = "1000"; //Default velocity
         }
 
         int velocity = Int32.Parse(maxVelocityInput.text);
@@ -79,9 +79,9 @@ public class Settings : MonoBehaviour
 
     public void SetFeedrate()
     {
-        if (int.Parse(feedrateInput.text) >= 1000)
+        if (int.Parse(feedrateInput.text) >= 10000)
         {
-            feedrateInput.text = "1000";
+            feedrateInput.text = "10000";
         }
 
         if (int.Parse(feedrateInput.text) <= 0)
@@ -94,5 +94,4 @@ public class Settings : MonoBehaviour
         PlayerPrefs.SetInt("feedrate", feedrate);
         ErrorHandler.Log("Set Feedrate: " + feedrate);
     }
-
 }

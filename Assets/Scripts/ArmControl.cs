@@ -339,11 +339,11 @@ public class ArmControl : MonoBehaviour
     {
         //Try to load the value from the saved settings
         mVelocity = PlayerPrefs.GetInt("velocity", 100); 
-        mSpeed = PlayerPrefs.GetInt("speed", 1);
+        mSpeed = PlayerPrefs.GetInt("speed", 10);
 
         //Fail-safe if the values didn't load properly
         mVelocity = (mVelocity <= 0) ? 100 : mVelocity;
-        mSpeed = (mSpeed <= 0) ? 1 : mSpeed;
+        mSpeed = (mSpeed <= 0) ? 10 : mSpeed;
     }
 
 }
