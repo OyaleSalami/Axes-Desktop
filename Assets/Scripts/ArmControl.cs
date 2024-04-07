@@ -89,20 +89,23 @@ public class ArmControl : MonoBehaviour
                     case GMode.G01: //Linear Move
                         SetCoords(); //Set linear coords only //Create a line renderer //Set its first position
                         currentLine = Instantiate(linePrefab, drawHolder.transform).GetComponent<LineRenderer>();
-                        currentLine.SetPosition(0, startCoord);
+                        currentLine.SetPosition(0, startCoord); currentLine.SetPosition(1, effector.transform.position);
                         break;
 
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords 
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(segmentStep, startCoord); segmentStep++; //Set the first position of the arc and add the index
+                        currentLine.SetPosition(0, startCoord); segmentStep++; //Set the first position of the arc and add the index
                         currentLine.positionCount = segmentStep + 1;
+                        currentLine.SetPosition(segmentStep, effector.transform.position);
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
                         currentLine.SetPosition(0, startCoord); segmentStep++; //Set its first position of the arc and add the index
+                        currentLine.positionCount = segmentStep + 1;
+                        currentLine.SetPosition(segmentStep, effector.transform.position);
                         break;
 
                     default:
@@ -154,6 +157,7 @@ public class ArmControl : MonoBehaviour
                 effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], 1);
                 m = 0; //Done with one segment of drawing
                 segmentStep++; currentLine.positionCount = segmentStep + 1;
+                currentLine.SetPosition(segmentStep, effector.transform.position);
             }
 
             //Approximate the endings (Done with the drawing of all segments)
