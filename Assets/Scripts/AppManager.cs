@@ -8,6 +8,8 @@ using UnityEngine.UI;
 
 public class AppManager : MonoBehaviour
 {
+    public static AppSettings appSettings;
+
     [Header("UI")]
     [SerializeField] Text codeLine;
     [SerializeField] Text titleText;
@@ -22,6 +24,8 @@ public class AppManager : MonoBehaviour
 
     void Start()
     {
+        appSettings = new();
+        appSettings.Load();
         CommandDefinitions.Init();
         Core.Init();
         ErrorHandler.Init();

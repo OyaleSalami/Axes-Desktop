@@ -232,7 +232,10 @@ public class ArmControl : MonoBehaviour
         //Setting up the Sweep, Start and End angles (Angles specified in degrees)
         startAngle = Core.coordList.Contains("c") ? Core.coord.c : CalculateStartAngle();
         endAngle = Core.coordList.Contains("e") ? Core.coord.e : CalculateEndAngle();
-        if (startAngle < 0 || endAngle < 0) { ErrorHandler.Error("Negative Angles Are Not Allowed!"); }
+
+        //Handling negative angle values
+        if (startAngle < 0) { startAngle = startAngle + 360; }
+        if (endAngle < 0) { endAngle = endAngle + 360; }
 
         bool flipDirection;
         sweep = endAngle - startAngle; //The angle of the arc //negative = Clockwise //positive = Anticlockwise
@@ -258,12 +261,9 @@ public class ArmControl : MonoBehaviour
             arcPoints.Add(centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
         }
 
-        if(clockwiseArc == true)
+        if (clockwiseArc == true && flipDirection != true)
         {
-            if(flipDirection != true)
-            {
-                arcPoints.Reverse();
-            }
+            arcPoints.Reverse();
         }
         drawArc = true;
     }
@@ -342,8 +342,8 @@ public class ArmControl : MonoBehaviour
     public void LoadMovementParameters()
     {
         //Try to load the value from the saved settings
-        mVelocity = PlayerPrefs.GetInt("velocity", 100); 
-        mSpeed = PlayerPrefs.GetInt("speed", 10);
+        mVelocity = AppManager.appSettings.maxFeedrate;
+        mSpeed = AppManager.appSettings.speed;
 
         //Fail-safe if the values didn't load properly
         mVelocity = (mVelocity <= 0) ? 100 : mVelocity;
