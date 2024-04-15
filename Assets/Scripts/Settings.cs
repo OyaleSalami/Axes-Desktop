@@ -38,7 +38,7 @@ public class Settings : MonoBehaviour
         }
 
         float speed = float.Parse(speedInput.text);
-        AppManager.appSettings.SetSpeed(speed);
+        AppManager.appSettings.SetSpeed(speed); UpdateUI();
         ErrorHandler.Log("Set Simulator Speed: " + speed);
     }
 
@@ -54,7 +54,7 @@ public class Settings : MonoBehaviour
         }
 
         float velocity = float.Parse(maxVelocityInput.text);
-        AppManager.appSettings.SetMaxFeedrate(velocity);
+        AppManager.appSettings.SetMaxFeedrate(velocity); UpdateUI();
         ErrorHandler.Log("Set Default Velocity: " + velocity);
     }
 
@@ -69,8 +69,8 @@ public class Settings : MonoBehaviour
             feedrateInput.text = "50";
         }
 
-        float feedrate = float.Parse(feedrateInput.text);
+        float feedrate = float.Parse(feedrateInput.text); 
         AppManager.appSettings.SetDefaultFeedrate(feedrate); Core.feedRate = feedrate;
-        ErrorHandler.Log("Set Feedrate: " + feedrate);
+        UpdateUI(); ErrorHandler.Log("Set Feedrate: " + feedrate);
     }
 }
