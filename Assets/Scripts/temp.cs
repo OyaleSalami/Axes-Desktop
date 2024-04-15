@@ -43,11 +43,15 @@ public class temp : MonoBehaviour
     {
         Debug.Log("Drawn!");
         float endAngle = endA; float startAngle = startA;
-        sweep = endAngle - startAngle; //If negative = Clockwise //If positive = Anticlockwise
 
-        if(sweep > 90)
+        //Fix negative angles
+        if (endAngle < 0) endAngle += 360;
+        if (startAngle < 0) startAngle += 360;
+
+        sweep = endAngle - startAngle; //positive angle steps
+        if(sweep < 0) //Fix overdraw of angles that exceed the 360 mark
         {
-            startAngle += 360;
+            endAngle += 360;
         }
         sweep = endAngle - startAngle;
 
@@ -68,31 +72,31 @@ public class temp : MonoBehaviour
         // Set the positions of the Line Renderer
         line.positionCount = segments;
         line.SetPositions(points);
+    }
 
-        /*
-        Vector3 center = Vector3.zero;
+    /*
+            Vector3 center = Vector3.zero;
 
-        Vector3 pointOnCircle;
+            Vector3 pointOnCircle;
 
-        while (angle <= 360)
-        {
-            pointOnCircle = center + (radius * new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)));
-            line.SetPosition(i, pointOnCircle);
+            while (angle <= 360)
+            {
+                pointOnCircle = center + (radius * new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)));
+                line.SetPosition(i, pointOnCircle);
 
-            line.positionCount++; i++;
-            angle += 5;                                                                                                         
-        }
+                line.positionCount++; i++;
+                angle += 5;                                                                                                         
+            }
 
         
-        for (int j = 0; j <= segments; j++)
-        {
-            Vector3 pointOnCircle = center + radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
-            Vector3 nextStep = new Vector3(centerPoint.x + Mathf.Cos(degree) * radius, 0, centerPoint.y + Mathf.Sin(degree) * radius);
-            line.SetPosition(i, pointOnCircle);
-        }
-        */
-        //float angle = i * angleStep;
-    }
+            for (int j = 0; j <= segments; j++)
+            {
+                Vector3 pointOnCircle = center + radius * new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
+                Vector3 nextStep = new Vector3(centerPoint.x + Mathf.Cos(degree) * radius, 0, centerPoint.y + Mathf.Sin(degree) * radius);
+                line.SetPosition(i, pointOnCircle);
+            }
+            */
+    //float angle = i * angleStep;
 
     public void CalculateCenterPoint()
     {

@@ -8,6 +8,8 @@ using UnityEngine.UI;
 
 public class AppManager : MonoBehaviour
 {
+    public static AppSettings appSettings;
+
     [Header("UI")]
     [SerializeField] Text codeLine;
     [SerializeField] Text titleText;
@@ -22,10 +24,9 @@ public class AppManager : MonoBehaviour
 
     void Start()
     {
-        CommandDefinitions.Init();
-        Core.Init();
-        ErrorHandler.Init();
-        UnLoadFile();
+        appSettings = new(); appSettings.Load();
+        ErrorHandler.Init(); UnLoadFile();
+        CommandDefinitions.Init(); Core.Init();
         UpdateUI();
     }
 
@@ -36,7 +37,7 @@ public class AppManager : MonoBehaviour
         UnLoadFile();
 
         // Create filter
-        var extensions = new[] { new ExtensionFilter("NC File", "nc"), new ExtensionFilter("NC File", "txt") };
+        var extensions = new[] { new ExtensionFilter("NC File", "nc", "txt") };
 
         //Open the context menu
         var path = StandaloneFileBrowser.OpenFilePanel("Select GCode File", "", extensions, false);

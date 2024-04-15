@@ -95,7 +95,7 @@ public class ArmControl : MonoBehaviour
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords 
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, startCoord); segmentStep++; //Set the first position of the arc and add the index
+                        currentLine.SetPosition(0, arcPoints[0]); segmentStep++; //Set the first position of the arc and add the index
                         currentLine.positionCount = segmentStep + 1;
                         currentLine.SetPosition(segmentStep, effector.transform.position);
                         break;
@@ -103,7 +103,7 @@ public class ArmControl : MonoBehaviour
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, startCoord); segmentStep++; //Set its first position of the arc and add the index
+                        currentLine.SetPosition(0, arcPoints[0]); segmentStep++; //Set its first position of the arc and add the index
                         currentLine.positionCount = segmentStep + 1;
                         currentLine.SetPosition(segmentStep, effector.transform.position);
                         break;
@@ -232,16 +232,34 @@ public class ArmControl : MonoBehaviour
         //Setting up the Sweep, Start and End angles (Angles specified in degrees)
         startAngle = Core.coordList.Contains("c") ? Core.coord.c : CalculateStartAngle();
         endAngle = Core.coordList.Contains("e") ? Core.coord.e : CalculateEndAngle();
-        if (startAngle < 0 || endAngle < 0) { ErrorHandler.Error("Negative Angles Are Not Allowed!"); }
 
-        bool flipDirection;
-        sweep = endAngle - startAngle; //The angle of the arc //negative = Clockwise //positive = Anticlockwise
-        if (sweep > 90) { startAngle += 360; }
-        if (sweep < -90) { startAngle -= 360; }
+        //Generate Arc Points
+        if(clockwiseArc)
+        {
+            //Generate Clockwise Points
+            GenerateArcPoints(endAngle, startAngle, clockwiseArc);
+        }
+        else
+        {
+            //Generate Anti-Clockwise Points
+            GenerateArcPoints(startAngle, endAngle, clockwiseArc);
+        }
 
-        sweep = endAngle - startAngle; //Recalculate the sweep angle
+        drawArc = true;
+    }
+
+    public void GenerateArcPoints(float start, float end, bool clockwise)
+    {
+        //Handling negative angle values
+        if (start < 0) start += 360;
+        if (end < 0) end += 360;
+        sweep = end - start;
+
+        if (sweep < 0 && !clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Anti-Clockwise)
+        if (sweep < 0 && clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Clockwise)
+        sweep = end - start; //Recalculate the sweep angle
+
         arcLength = CalculateArcLength(sweep, radius); //Calculate the length of the arc
-        flipDirection = (sweep < 0);
 
         //Calculate the segment count
         segmentCount = (int)(arcLength / segmentLength); //Calculate the segment count
@@ -251,21 +269,16 @@ public class ArmControl : MonoBehaviour
         // Determine the points on the arc
         for (int i = 0; i < segmentCount; i++)
         {
-            //Based on if it is a clockwise arc or not
-            float angle = (startAngle) + (angleStep * i);
+            float angle = (start) + (angleStep * i);
 
             float radians = Mathf.Deg2Rad * angle; //Convert angles from degrees to radian
             arcPoints.Add(centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
         }
 
-        if(clockwiseArc == true)
+        if (clockwise)
         {
-            if(flipDirection != true)
-            {
-                arcPoints.Reverse();
-            }
+            arcPoints.Reverse();
         }
-        drawArc = true;
     }
 
     /// <summary>Checks to see if the simulator is done with a command and sets the appropriate mode</summary>
@@ -322,7 +335,7 @@ public class ArmControl : MonoBehaviour
     /// <summary>Returns the radius of the arc given the specified params</summary>
     public float CalculateRadius(Vector3 start, Vector3 center)
     {
-        //NOTE: Calculate and set the radius (Assumes a uniform circular arc)
+        //NOTE: Calculate the radius (Assumes a uniform circular arc)
         return (start - center).magnitude;
     }
 
@@ -342,8 +355,8 @@ public class ArmControl : MonoBehaviour
     public void LoadMovementParameters()
     {
         //Try to load the value from the saved settings
-        mVelocity = PlayerPrefs.GetInt("velocity", 100); 
-        mSpeed = PlayerPrefs.GetInt("speed", 10);
+        mVelocity = AppManager.appSettings.maxFeedrate;
+        mSpeed = AppManager.appSettings.speed;
 
         //Fail-safe if the values didn't load properly
         mVelocity = (mVelocity <= 0) ? 100 : mVelocity;
