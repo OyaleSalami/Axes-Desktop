@@ -28,9 +28,9 @@ public class Settings : MonoBehaviour
 
     public void SetSpeed()
     {
-        if (float.Parse(speedInput.text) > 200)
+        if (float.Parse(speedInput.text) > 1000)
         {
-            speedInput.text = "200";
+            speedInput.text = "1000";
         }
         if (float.Parse(speedInput.text) <= 0)
         {

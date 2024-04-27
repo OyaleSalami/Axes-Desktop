@@ -58,6 +58,11 @@ public class CameraControl : MonoBehaviour
             float xRot = Input.GetAxis("Horizontal");
             pivot.transform.Rotate(Vector3.up, -rotFactor * xRot * Time.deltaTime);
         }
+
+        if(Input.GetKeyDown(KeyCode.X))
+        {
+            cam.orthographic = !cam.orthographic;
+        }
     }
 
     public void SetCamMode(int _mode)
@@ -71,13 +76,20 @@ public class CameraControl : MonoBehaviour
 
     public void ZoomCamera(float _factor)
     {
-        if (cam.fieldOfView >= 10 && cam.fieldOfView <= 120)
+        if (!cam.orthographic)
         {
-            cam.fieldOfView += _factor;
-        }
+            if (cam.fieldOfView >= 10 && cam.fieldOfView <= 120)
+            {
+                cam.fieldOfView += _factor;
+            }
 
-        if (cam.fieldOfView < 10) cam.fieldOfView = 10;
-        if (cam.fieldOfView > 120) cam.fieldOfView = 120;
+            if (cam.fieldOfView < 10) cam.fieldOfView = 10;
+            if (cam.fieldOfView > 120) cam.fieldOfView = 120;
+        }
+        else
+        {
+            cam.orthographicSize += _factor;
+        }
     }
 
     public void ResetCamera()

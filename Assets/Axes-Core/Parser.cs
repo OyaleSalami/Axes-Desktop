@@ -17,6 +17,11 @@ namespace AxesCore
             foreach (string token in tokens)
             {
                 ErrorHandler.Log("Interpreting token : " + token);
+                if(string.IsNullOrEmpty(token) || token == " ")
+                {
+                    break;
+                }
+
                 switch (token.ToLower()[0]) //Match the first letter of the token
                 {
                     case 'g': //Preparatory Instructions
@@ -117,6 +122,9 @@ namespace AxesCore
                     case 'k': //Set the k coordinate
                         Core.coord.k = ReadValue(token);
                         Core.coordList.Add("k");
+                        break;
+
+                    case ' ':
                         break;
 
                     case '%': //End of the program
