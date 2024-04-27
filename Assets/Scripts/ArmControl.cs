@@ -40,7 +40,7 @@ public class ArmControl : MonoBehaviour
 
 
     /// <summary>The length of each line segment of the arc</summary>
-    private float segmentLength = 0.75f;
+    private float segmentLength = 0.5f;
     /// <summary>The number of segments in an arc</summary>
     private int segmentCount;
     /// <summary>The list of the points in the arc</summary>
@@ -51,8 +51,6 @@ public class ArmControl : MonoBehaviour
     private float t = 0f;
     /// <summary>The timer for Lerping Tinier Arc Draw Commands</summary>
     private float m = 0f;
-    /// <summary>The index of the current segment</summary>
-    private int segmentStep;
     /// <summary>The stepping angle for the segments in an arc</summary>
     private float angleStep;
 
@@ -93,19 +91,21 @@ public class ArmControl : MonoBehaviour
                         break;
 
                     case GMode.G02: //Clockwise Arc Draw
-                        clockwiseArc = true; SetCoords(true); //Set the linear and arc coords 
+                        clockwiseArc = true; SetCoords(true); //Set the linear and arc coords
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, arcPoints[0]); segmentStep++; //Set the first position of the arc and add the index
-                        currentLine.positionCount = segmentStep + 1;
-                        currentLine.SetPosition(segmentStep, effector.transform.position);
+                        currentLine.SetPosition(0, effector.transform.position); //Set the first point of the arc
+                        currentLine.positionCount++;
+                        //Set the second point
+                        currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, arcPoints[0]); segmentStep++; //Set its first position of the arc and add the index
-                        currentLine.positionCount = segmentStep + 1;
-                        currentLine.SetPosition(segmentStep, effector.transform.position);
+                        currentLine.SetPosition(0, effector.transform.position); //Set the first point of the arc
+                        currentLine.positionCount++;
+                        //Set the second point
+                        currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
                     default:
@@ -119,7 +119,7 @@ public class ArmControl : MonoBehaviour
                 if (Core.group[1] == GMode.G00) //Rapid Move Draw
                 {
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                    t += (mVelocity / (60 * d)) * Time.deltaTime * mSpeed;//Time Control
+                    t += (mVelocity / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else if (Core.group[1] == GMode.G01) //Linear Move Draw
                 {
@@ -127,17 +127,15 @@ public class ArmControl : MonoBehaviour
                     currentLine.SetPosition(1, effector.transform.position);
                     t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
-                else if (Core.group[1] == GMode.G02) //Clockwise Arc Movements
+                else if (Core.group[1] == GMode.G02 || Core.group[1] == GMode.G03) //Arc Draws
                 {
-                    effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], m);
-                    currentLine.SetPosition(segmentStep, effector.transform.position); //Set the position of the arc point
+                    effector.transform.position = Vector3.Lerp(arcPoints[currentLine.positionCount - 2], arcPoints[currentLine.positionCount - 1], m);
+                    currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the position of the arc point
                     m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
                 }
-                else if (Core.group[1] == GMode.G03) //Anti-Clockwise Arc Movements
+                else
                 {
-                    effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], m);
-                    currentLine.SetPosition(segmentStep, effector.transform.position); //Set the position of the arc point
-                    m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
+                    ErrorHandler.Error("Unhandled Draw Call!");
                 }
             }
 
@@ -146,6 +144,7 @@ public class ArmControl : MonoBehaviour
             {
                 //Approximate the line to the correct ending
                 effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
+                currentLine.SetPosition(1, effector.transform.position);
                 t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With Linear Drawing!");
             }
@@ -153,18 +152,22 @@ public class ArmControl : MonoBehaviour
             //Arc Draw Timing Control
             if (m >= 1.0f)
             {
-                //Approximate the line segment to the correct ending
-                effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 1], arcPoints[segmentStep], 1);
+                //Approximate the line segment to the correct ending specified in the array
+                effector.transform.position = arcPoints[currentLine.positionCount - 1];
+                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
+
                 m = 0; //Done with one segment of drawing
-                segmentStep++; currentLine.positionCount = segmentStep + 1;
-                currentLine.SetPosition(segmentStep, effector.transform.position);
+                
+                //Set the start details for the next line segment
+                currentLine.positionCount++;
+                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); 
             }
 
             //Approximate the endings (Done with the drawing of all segments)
-            if (segmentStep >= segmentCount && drawArc == true)
+            if (currentLine.positionCount == segmentCount && drawArc == true)
             {
                 //Approximate the last line segment to the correct ending
-                effector.transform.position = Vector3.Lerp(arcPoints[segmentStep - 2], arcPoints[segmentStep - 1], 1);
+                effector.transform.position = arcPoints[currentLine.positionCount - 1];
                 currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
                 t = 0f; m = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With The Arc Drawing!");
@@ -180,14 +183,18 @@ public class ArmControl : MonoBehaviour
         LoadMovementParameters(); //Load the parameters as specified in the settings
         SetLinearCoords(); //Set the linear coordinates
 
-        ErrorHandler.Log("Starting Point: " + startCoord + " End Point: " + endCoord);
-
         //Set the arc coordinates if it is specified
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates
+            effector.transform.position = arcPoints[0];
+            ErrorHandler.Log("Starting Point: " + startCoord + " End Point: " + arcPoints[arcPoints.Count - 1]);
             ErrorHandler.Log("Radius: " + radius + " Arc Angle: " + sweep + " Arc Length : " + arcLength + " Center Point: " + centerPoint);
             ErrorHandler.Log("Start Angle: " + startAngle + " End Angle: " + endAngle);
+        }
+        else
+        {
+        	ErrorHandler.Log("Starting Point: " + startCoord + " End Point: " + endCoord);
         }
     }
 
@@ -269,10 +276,9 @@ public class ArmControl : MonoBehaviour
         // Determine the points on the arc
         for (int i = 0; i < segmentCount; i++)
         {
-            float angle = (start) + (angleStep * i);
-
-            float radians = Mathf.Deg2Rad * angle; //Convert angles from degrees to radian
-            arcPoints.Add(centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
+            float angle = start + (angleStep * i);
+			float radians = Mathf.Deg2Rad * angle; //Convert angles from degrees to radian
+			arcPoints.Add(centerPoint + new Vector3(Mathf.Cos(radians) * radius, 0f, Mathf.Sin(radians) * radius));
         }
 
         if (clockwise)
@@ -298,9 +304,9 @@ public class ArmControl : MonoBehaviour
         d = 0; endCoord = Vector3.zero;
         startCoord = end.transform.position; //The positon should be gotten from the tip
 
-        //Arc Details
+        //Arc Details segmentCount = 1; 
         startAngle = 0; endAngle = 0; arcLength = 0; radius = 0; drawArc = false; arcPoints = new List<Vector3>();
-        segmentStep = 0; segmentCount = 1; arcPoints = null; centerPoint = Vector3.zero;
+        arcPoints = null; centerPoint = Vector3.zero;
     }
 
     /// <summary>Calculate the centrepoint for the arc by calculating the intersection of 2 circles</summary>

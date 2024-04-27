@@ -24,8 +24,8 @@ public class AppManager : MonoBehaviour
 
     void Start()
     {
-        appSettings = new(); appSettings.Load();
         ErrorHandler.Init(); UnLoadFile();
+        appSettings = new(); appSettings.Load();
         CommandDefinitions.Init(); Core.Init();
         UpdateUI();
     }
