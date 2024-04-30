@@ -38,7 +38,6 @@ public class ArmControl : MonoBehaviour
     /// <summary>Clockwise or anticlockwise arc?</summary>
     private bool clockwiseArc;
 
-
     /// <summary>The length of each line segment of the arc</summary>
     private float segmentLength = 0.5f;
     /// <summary>The number of segments in an arc</summary>
@@ -93,18 +92,18 @@ public class ArmControl : MonoBehaviour
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, effector.transform.position); //Set the first point of the arc
-                        currentLine.positionCount++;
-                        //Set the second point
+                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc (It should be the last point on the previous arc)
+
+                        currentLine.positionCount++; //2
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, effector.transform.position); //Set the first point of the arc
-                        currentLine.positionCount++;
-                        //Set the second point
+                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc
+                        
+                        currentLine.positionCount++; //2
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
@@ -119,7 +118,7 @@ public class ArmControl : MonoBehaviour
                 if (Core.group[1] == GMode.G00) //Rapid Move Draw
                 {
                     effector.transform.position = Vector3.Lerp(startCoord, endCoord, t);
-                    t += (mVelocity / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
+                    t += (Core.feedRate / (60 * d)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else if (Core.group[1] == GMode.G01) //Linear Move Draw
                 {
@@ -139,39 +138,43 @@ public class ArmControl : MonoBehaviour
                 }
             }
 
-            //Linear Timing Control
-            if (t >= 1.0f)
+            if (t >= 1.0f) //Linear Timing Control
             {
-                //Approximate the line to the correct ending
-                effector.transform.position = Vector3.Lerp(startCoord, endCoord, 1);
-                currentLine.SetPosition(1, effector.transform.position);
+                if(Core.group[1] == GMode.G01)
+                {
+                    effector.transform.position = endCoord; //Approximate the line to the correct ending
+                    currentLine.SetPosition(1, effector.transform.position);
+                }
+
                 t = 0f; running = false;
                 Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With Linear Drawing!");
             }
 
-            //Arc Draw Timing Control
-            if (m >= 1.0f)
+            if (m >= 1.0f) //Arc Draw Timing Control
             {
-                //Approximate the line segment to the correct ending specified in the array
-                effector.transform.position = arcPoints[currentLine.positionCount - 1];
+                effector.transform.position = arcPoints[currentLine.positionCount - 1]; //Approximate the line segment to the correct ending specified in the array
                 currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
-
-                m = 0; //Done with one segment of drawing
                 
                 //Set the start details for the next line segment
                 currentLine.positionCount++;
-                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); 
+                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
+                m = 0;
             }
 
-            //Approximate the endings (Done with the drawing of all segments)
-            if (currentLine.positionCount == segmentCount && drawArc == true)
+            
+            if(drawArc) //Arc Is Done Drawing
             {
-                //Approximate the last line segment to the correct ending
-                effector.transform.position = arcPoints[currentLine.positionCount - 1];
-                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
-                t = 0f; m = 0f; running = false;
-                Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With The Arc Drawing!");
-            }
+            	//Approximate the endings (Done with the drawing of all segments)
+	            if (currentLine.positionCount == arcPoints.Count)
+	            {
+	                //Approximate the last line segment to the correct ending
+	                effector.transform.position = arcPoints[arcPoints.Count - 1];
+	                currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
+
+	                t = 0f; m = 0f; running = false;
+	                Core.mode = CoreMode.drawEnd; ErrorHandler.Log("Done With The Arc Drawing!");
+	            }
+        	}
         }
         CheckIfDone();
     }
@@ -179,6 +182,8 @@ public class ArmControl : MonoBehaviour
     /// <summary>Resets and then set the new coordinates</summary>
     public void SetCoords(bool drawArcs = false)
     {
+    	bool lastArc = drawArc; //Was the last draw an arc or not?
+
         ResetCoords(); //Clear the coordinates holder
         LoadMovementParameters(); //Load the parameters as specified in the settings
         SetLinearCoords(); //Set the linear coordinates
@@ -187,7 +192,14 @@ public class ArmControl : MonoBehaviour
         if (drawArcs == true)
         {
             SetArcCoords(); //Set the arc coordinates
-            effector.transform.position = arcPoints[0];
+
+            //Set the continuity line between two consecutive lines
+	        if(lastArc == true) 
+	        {
+	        	arcPoints.Insert(0, startCoord); //First point of the arc should be the last point of the previous arc
+	        }
+	        effector.transform.position = arcPoints[0];
+
             ErrorHandler.Log("Starting Point: " + startCoord + " End Point: " + arcPoints[arcPoints.Count - 1]);
             ErrorHandler.Log("Radius: " + radius + " Arc Angle: " + sweep + " Arc Length : " + arcLength + " Center Point: " + centerPoint);
             ErrorHandler.Log("Start Angle: " + startAngle + " End Angle: " + endAngle);
@@ -304,7 +316,7 @@ public class ArmControl : MonoBehaviour
         d = 0; endCoord = Vector3.zero;
         startCoord = end.transform.position; //The positon should be gotten from the tip
 
-        //Arc Details segmentCount = 1; 
+        //Arc Details
         startAngle = 0; endAngle = 0; arcLength = 0; radius = 0; drawArc = false; arcPoints = new List<Vector3>();
         arcPoints = null; centerPoint = Vector3.zero;
     }
@@ -368,5 +380,4 @@ public class ArmControl : MonoBehaviour
         mVelocity = (mVelocity <= 0) ? 100 : mVelocity;
         mSpeed = (mSpeed <= 0) ? 10 : mSpeed;
     }
-
 }
