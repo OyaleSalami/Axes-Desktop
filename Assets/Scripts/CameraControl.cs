@@ -51,7 +51,7 @@ public class CameraControl : MonoBehaviour
             float xMov = Input.GetAxis("Horizontal");
             float yMov = Input.GetAxis("Vertical");
 
-            transform.position += (transform.right * xMov + transform.forward * yMov) * (15f * Time.deltaTime);
+            transform.position += (transform.right * xMov + transform.forward * yMov) * (30f * Time.deltaTime);
         }
         else if (mode == CamMode.Rotate) //TODO: Add mouse rotation
         {
@@ -80,7 +80,7 @@ public class CameraControl : MonoBehaviour
         {
             if (cam.fieldOfView >= 10 && cam.fieldOfView <= 120)
             {
-                cam.fieldOfView += _factor;
+                cam.fieldOfView += (_factor * 50f * Time.deltaTime);
             }
 
             if (cam.fieldOfView < 10) cam.fieldOfView = 10;
