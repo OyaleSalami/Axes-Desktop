@@ -129,8 +129,10 @@ public class ArmControl : MonoBehaviour
                 else if (Core.group[1] == GMode.G02 || Core.group[1] == GMode.G03) //Arc Draws
                 {
                     effector.transform.position = Vector3.Lerp(arcPoints[currentLine.positionCount - 2], arcPoints[currentLine.positionCount - 1], m);
+                    //Distance between the start and end points of that segment
+                    float dist = (arcPoints[currentLine.positionCount - 1] - arcPoints[currentLine.positionCount - 2]).magnitude; 
                     currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the position of the arc point
-                    m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
+                    m += (Core.feedRate / (60 * dist)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else
                 {
