@@ -18,7 +18,9 @@ public class CameraControl : MonoBehaviour
     [SerializeField] Vector3 ogCameraPos;
     [SerializeField] Quaternion ogCameraRot;
 
-    [SerializeField] Camera cam;
+    [SerializeField] Camera cam; //Active Camera
+    [SerializeField] Camera regCam; //Regular camera
+    [SerializeField] Camera topCam; //Topdown Camera
 
     [Header("ToolBar UI")]
     [SerializeField] Image panImage;
@@ -59,9 +61,20 @@ public class CameraControl : MonoBehaviour
             pivot.transform.Rotate(Vector3.up, -rotFactor * xRot * Time.deltaTime);
         }
 
-        if(Input.GetKeyDown(KeyCode.X))
+        if(Input.GetKeyDown(KeyCode.X)) //Put the camera in orthographic mode
         {
-            cam.orthographic = !cam.orthographic;
+            if(cam == regCam)
+            {
+                topCam.gameObject.SetActive(true);
+                regCam.gameObject.SetActive(false);
+                cam = topCam;
+            }
+            else
+            {
+                regCam.gameObject.SetActive(true);
+                topCam.gameObject.SetActive(false);
+                cam = regCam;
+            }
         }
     }
 

@@ -574,6 +574,8 @@ MonoBehaviour:
   ogCameraPos: {x: 0, y: 0, z: 0}
   ogCameraRot: {x: 0, y: 0, z: 0, w: 0}
   cam: {fileID: 963194227}
+  regCam: {fileID: 963194227}
+  topCam: {fileID: 1750810939}
   panImage: {fileID: 1184228640}
   rotImage: {fileID: 857914415}
   resetImage: {fileID: 1199176394}
