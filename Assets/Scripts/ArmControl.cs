@@ -92,18 +92,26 @@ public class ArmControl : MonoBehaviour
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
+                        if((arcPoints[1] - arcPoints[0]).magnitude > 5)
+                        {
+                        	arcPoints[0] = arcPoints[1]; effector.transform.position = arcPoints[0];
+                        }
                         currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc (It should be the last point on the previous arc)
-
-                        currentLine.positionCount++; //2
+                        
+                        currentLine.positionCount++;
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc
+                        if((arcPoints[1] - arcPoints[0]).magnitude > 5)
+                        {
+                        	arcPoints[0] = arcPoints[1]; effector.transform.position = arcPoints[0];
+                        }
+                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc (It should be the last point on the previous arc)
                         
-                        currentLine.positionCount++; //2
+                        currentLine.positionCount++;
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
@@ -154,7 +162,8 @@ public class ArmControl : MonoBehaviour
 
             if (m >= 1.0f) //Arc Draw Timing Control
             {
-                effector.transform.position = arcPoints[currentLine.positionCount - 1]; //Approximate the line segment to the correct ending specified in the array
+                //Approximate the line segment to the correct ending specified in the array
+                effector.transform.position = arcPoints[currentLine.positionCount - 1]; 
                 currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
                 
                 //Set the start details for the next line segment
@@ -267,6 +276,7 @@ public class ArmControl : MonoBehaviour
         }
 
         drawArc = true;
+        if(arcPoints.Count <= 0) Core.mode == CoreMode.drawEnd; 
     }
 
     public void GenerateArcPoints(float start, float end, bool clockwise)

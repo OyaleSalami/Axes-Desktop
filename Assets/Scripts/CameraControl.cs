@@ -101,7 +101,13 @@ public class CameraControl : MonoBehaviour
         }
         else
         {
-            cam.orthographicSize += _factor;
+            if(cam.orthographicSize >= 3 && cam.orthographicSize <= 100)
+            {
+                cam.orthographicSize += _factor;
+            }
+
+            if(cam.orthographicSize < 3)    cam.orthographicSize = 3;
+            if(cam.orthographicSize > 100)  cam.orthographicSize = 100;
         }
     }
 
