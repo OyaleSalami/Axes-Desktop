@@ -276,7 +276,7 @@ public class ArmControl : MonoBehaviour
         }
 
         drawArc = true;
-        if(arcPoints.Count <= 0) Core.mode == CoreMode.drawEnd; 
+        if(arcPoints.Count <= 0) Core.mode = CoreMode.drawEnd; 
     }
 
     public void GenerateArcPoints(float start, float end, bool clockwise)
@@ -284,7 +284,7 @@ public class ArmControl : MonoBehaviour
         //Handling negative angle values
         if (start < 0) start += 360;
         if (end < 0) end += 360;
-        sweep = end - start;
+        sweep = end - start; //Calculate the sweep angle
 
         if (sweep < 0 && !clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Anti-Clockwise)
         if (sweep < 0 && clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Clockwise)

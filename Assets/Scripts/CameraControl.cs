@@ -26,6 +26,7 @@ public class CameraControl : MonoBehaviour
     [SerializeField] Image panImage;
     [SerializeField] Image rotImage;
     [SerializeField] Image resetImage;
+    [SerializeField] Text cameraModeText;
 
     void Start()
     {
@@ -43,6 +44,20 @@ public class CameraControl : MonoBehaviour
 
     void Update()
     {
+        float h = -2f * Input.GetAxis("Mouse X");
+        float v = -2f * Input.GetAxis("Mouse Y");
+
+        if(Input.GetMouseButton(0)) //Drag
+        {
+            transform.position += (transform.right * h + transform.forward * v) * (30f * Time.deltaTime);
+        }
+
+        if(Input.GetMouseButton(1)) //Rotate
+        {
+            pivot.transform.Rotate(Vector3.up, -rotFactor * 2 * h * Time.deltaTime);
+        }
+
+
         if (Input.mouseScrollDelta.sqrMagnitude > 0)
         {
             ZoomCamera(-Input.mouseScrollDelta.y);
@@ -63,18 +78,7 @@ public class CameraControl : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.X)) //Put the camera in orthographic mode
         {
-            if(cam == regCam)
-            {
-                topCam.gameObject.SetActive(true);
-                regCam.gameObject.SetActive(false);
-                cam = topCam;
-            }
-            else
-            {
-                regCam.gameObject.SetActive(true);
-                topCam.gameObject.SetActive(false);
-                cam = regCam;
-            }
+            SwitchCameras();
         }
     }
 
@@ -93,7 +97,7 @@ public class CameraControl : MonoBehaviour
         {
             if (cam.fieldOfView >= 10 && cam.fieldOfView <= 120)
             {
-                cam.fieldOfView += (_factor * 50f * Time.deltaTime);
+                cam.fieldOfView += (_factor * 60f * Time.deltaTime);
             }
 
             if (cam.fieldOfView < 10) cam.fieldOfView = 10;
@@ -108,6 +112,25 @@ public class CameraControl : MonoBehaviour
 
             if(cam.orthographicSize < 3)    cam.orthographicSize = 3;
             if(cam.orthographicSize > 100)  cam.orthographicSize = 100;
+        }
+    }
+
+
+    public void SwitchCameras()
+    {
+        if(cam == regCam)
+        {
+            topCam.gameObject.SetActive(true);
+            regCam.gameObject.SetActive(false);
+            cam = topCam;
+            cameraModeText.text = "Orthographic";
+        }
+        else
+        {
+            regCam.gameObject.SetActive(true);
+            topCam.gameObject.SetActive(false);
+            cam = regCam;
+            cameraModeText.text = "Perspective";
         }
     }
 
