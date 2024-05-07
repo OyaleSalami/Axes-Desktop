@@ -92,18 +92,26 @@ public class ArmControl : MonoBehaviour
                     case GMode.G02: //Clockwise Arc Draw
                         clockwiseArc = true; SetCoords(true); //Set the linear and arc coords
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
+                        if((arcPoints[1] - arcPoints[0]).magnitude > 5)
+                        {
+                        	arcPoints[0] = arcPoints[1]; effector.transform.position = arcPoints[0];
+                        }
                         currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc (It should be the last point on the previous arc)
-
-                        currentLine.positionCount++; //2
+                        
+                        currentLine.positionCount++;
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
                     case GMode.G03: //Anti-Clockwise Arc Draw
                         clockwiseArc = false; SetCoords(true); //Set the linear and arc coords  
                         currentLine = Instantiate(arcPrefab, drawHolder.transform).GetComponent<LineRenderer>(); //Create a line renderer
-                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc
+                        if((arcPoints[1] - arcPoints[0]).magnitude > 5)
+                        {
+                        	arcPoints[0] = arcPoints[1]; effector.transform.position = arcPoints[0];
+                        }
+                        currentLine.SetPosition(0, arcPoints[0]); //Set the first point of the arc (It should be the last point on the previous arc)
                         
-                        currentLine.positionCount++; //2
+                        currentLine.positionCount++;
                         currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the second point of the arc
                         break;
 
@@ -129,8 +137,10 @@ public class ArmControl : MonoBehaviour
                 else if (Core.group[1] == GMode.G02 || Core.group[1] == GMode.G03) //Arc Draws
                 {
                     effector.transform.position = Vector3.Lerp(arcPoints[currentLine.positionCount - 2], arcPoints[currentLine.positionCount - 1], m);
+                    //Distance between the start and end points of that segment
+                    float dist = (arcPoints[currentLine.positionCount - 1] - arcPoints[currentLine.positionCount - 2]).magnitude; 
                     currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position); //Set the position of the arc point
-                    m += (Core.feedRate / (60 * segmentLength)) * Time.deltaTime * mSpeed; //Time Control
+                    m += (Core.feedRate / (60 * dist)) * Time.deltaTime * mSpeed; //Time Control
                 }
                 else
                 {
@@ -152,7 +162,8 @@ public class ArmControl : MonoBehaviour
 
             if (m >= 1.0f) //Arc Draw Timing Control
             {
-                effector.transform.position = arcPoints[currentLine.positionCount - 1]; //Approximate the line segment to the correct ending specified in the array
+                //Approximate the line segment to the correct ending specified in the array
+                effector.transform.position = arcPoints[currentLine.positionCount - 1]; 
                 currentLine.SetPosition(currentLine.positionCount - 1, effector.transform.position);
                 
                 //Set the start details for the next line segment
@@ -265,6 +276,7 @@ public class ArmControl : MonoBehaviour
         }
 
         drawArc = true;
+        if(arcPoints.Count <= 0) Core.mode = CoreMode.drawEnd; 
     }
 
     public void GenerateArcPoints(float start, float end, bool clockwise)
@@ -272,7 +284,7 @@ public class ArmControl : MonoBehaviour
         //Handling negative angle values
         if (start < 0) start += 360;
         if (end < 0) end += 360;
-        sweep = end - start;
+        sweep = end - start; //Calculate the sweep angle
 
         if (sweep < 0 && !clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Anti-Clockwise)
         if (sweep < 0 && clockwise) end += 360; //Fix overdraw of angles that exceed the 360 mark (Clockwise)

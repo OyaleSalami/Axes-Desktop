@@ -15,7 +15,18 @@ public class temp : MonoBehaviour
     [SerializeField] float endA = 90;
     [SerializeField] float sweep;
     [SerializeField] int segments = 20;
-    [SerializeField] bool clockwise = true;
+    //[SerializeField] bool clockwise = true;
+
+    /*
+        1: (-1.7, 0, 23.9)
+        2: (-0.5, 0, 28)
+
+        3: (12.6, 0, 26.4)
+        4: (13, 0, 22.5)
+
+        5: (39.56, 0, 1.27)
+        6: (21.6, 0, 1.59)
+    */
 
     void Start()
     {
@@ -35,7 +46,10 @@ public class temp : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.V))
         {
-            Draw();
+            //Draw();
+            Debug.Log("First Distance: " + (new Vector3(-0.5f, 0f, 28f)- new Vector3(-1.7f, 0f, 23.9f)).magnitude);
+            Debug.Log("Second Distance: " + (new Vector3(13f, 0f, 22.5f)- new Vector3(12.6f, 0f, 26.4f)).magnitude);
+            Debug.Log("Third Distance: " + (new Vector3(21.6f, 0f, 1.59f)- new Vector3(39.56f, 0f, 1.27f)).magnitude);
         }
     }
 
