@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class CameraControl : MonoBehaviour
 {
     [SerializeField] CamMode mode;
-    [SerializeField] GameObject pivot;
+    //[SerializeField] GameObject pivot;
     [SerializeField] float rotFactor = 50f;
 
     [Header("Origins")]
@@ -28,15 +28,15 @@ public class CameraControl : MonoBehaviour
     [SerializeField] Image resetImage;
     [SerializeField] Text cameraModeText;
 
+    [Header("Scale")]
+    [SerializeField] GameObject scaleUI;
+
     void Start()
     {
         mode = CamMode.Pan;
 
         //Store the original position and rotation of the pivot
-        ogPivotPos = pivot.transform.position;
         ogCameraPos = this.transform.position;
-
-        ogPivotRot = pivot.transform.rotation;
         ogCameraRot = this.transform.rotation;
         ResetUI();
         panImage.color = Color.green;
@@ -49,18 +49,17 @@ public class CameraControl : MonoBehaviour
 
         if(Input.GetMouseButton(0)) //Drag
         {
-            transform.position += (transform.right * h + transform.forward * v) * (30f * Time.deltaTime);
+            transform.position += (transform.right * h + transform.forward * v) * (100f * Time.deltaTime);
         }
 
-        if(Input.GetMouseButton(1)) //Rotate
+        if(Input.GetMouseButton(1) && cam == regCam) //Rotate
         {
-            pivot.transform.Rotate(Vector3.up, -rotFactor * 2 * h * Time.deltaTime);
+            transform.Rotate(Vector3.up, -rotFactor * 5f * h * Time.deltaTime);
         }
-
 
         if (Input.mouseScrollDelta.sqrMagnitude > 0)
         {
-            ZoomCamera(-Input.mouseScrollDelta.y);
+            ZoomCamera(-Input.mouseScrollDelta.y * 5f);
         }
 
         if (mode == CamMode.Pan)
@@ -70,10 +69,10 @@ public class CameraControl : MonoBehaviour
 
             transform.position += (transform.right * xMov + transform.forward * yMov) * (30f * Time.deltaTime);
         }
-        else if (mode == CamMode.Rotate) //TODO: Add mouse rotation
+        else if (mode == CamMode.Rotate)
         {
             float xRot = Input.GetAxis("Horizontal");
-            pivot.transform.Rotate(Vector3.up, -rotFactor * xRot * Time.deltaTime);
+            transform.Rotate(Vector3.up, -rotFactor * xRot * Time.deltaTime);
         }
 
         if(Input.GetKeyDown(KeyCode.X)) //Put the camera in orthographic mode
@@ -108,13 +107,13 @@ public class CameraControl : MonoBehaviour
             if(cam.orthographicSize >= 2 && cam.orthographicSize <= 120)
             {
                 cam.orthographicSize += _factor;
+                scaleUI.GetComponent<ScaleManager>().GenerateScaleNumbers();
             }
 
             if(cam.orthographicSize < 2)    cam.orthographicSize = 2;
             if(cam.orthographicSize > 120)  cam.orthographicSize = 120;
         }
     }
-
 
     public void SwitchCameras()
     {
@@ -123,7 +122,10 @@ public class CameraControl : MonoBehaviour
             topCam.gameObject.SetActive(true);
             regCam.gameObject.SetActive(false);
             cam = topCam;
+            ResetCamera();
             cameraModeText.text = "Orthographic";
+            scaleUI.SetActive(true);
+            scaleUI.GetComponent<ScaleManager>().GenerateScaleNumbers();
         }
         else
         {
@@ -131,19 +133,14 @@ public class CameraControl : MonoBehaviour
             topCam.gameObject.SetActive(false);
             cam = regCam;
             cameraModeText.text = "Perspective";
+            scaleUI.SetActive(false);
         }
     }
 
     public void ResetCamera()
     {
         //Reset the pivot to its original
-        pivot.transform.position = ogPivotPos;
-        pivot.transform.rotation = ogPivotRot;
-
-        //Reset the camera to its original
-        transform.position = ogCameraPos;
-        transform.rotation = ogCameraRot;
-
+        transform.SetPositionAndRotation(ogCameraPos, ogCameraRot);
         ResetUI();
         panImage.color = Color.green;
         mode = CamMode.Pan;

@@ -10,6 +10,14 @@ public class Settings : MonoBehaviour
     [SerializeField] InputField feedrateInput;
     [SerializeField] InputField maxVelocityInput;
 
+    [Header("Color Settings")]
+    [SerializeField] Material lineMat;
+    [SerializeField] Material imageMat;
+    [SerializeField] Image displayImage;
+    [SerializeField] Slider red;
+    [SerializeField] Slider green;
+    [SerializeField] Slider blue;
+
     void Start()
     {
         UpdateUI();
@@ -72,5 +80,17 @@ public class Settings : MonoBehaviour
         float feedrate = float.Parse(feedrateInput.text); 
         AppManager.appSettings.SetDefaultFeedrate(feedrate); Core.feedRate = feedrate;
         UpdateUI(); ErrorHandler.Log("Set Feedrate: " + feedrate);
+    }
+
+    //Color Related Functions
+
+    public void SetNewColor()
+    {
+        float r = red.value;
+        float g = green.value;
+        float b = blue.value;
+
+        imageMat.color = new Color(r, g, b);
+        lineMat.color = new Color(r, g, b);
     }
 }
